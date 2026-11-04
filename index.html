@@ -3,517 +3,584 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math World Cup</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Math World Cup: Addition & Subtraction</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
+        @keyframes kickBall {
+            0% { transform: scale(1) translate(0, 0); opacity: 1; }
+            50% { transform: scale(0.6) translate(var(--kick-x, 0px), -120px); opacity: 0.9; }
+            100% { transform: scale(0.3) translate(var(--kick-target-x, 0px), -220px); opacity: 0; }
+        }
+        .animate-kick {
+            animation: kickBall 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+        @keyframes netBulge {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05) translateY(-5px); }
+            100% { transform: scale(1); }
+        }
+        .animate-net {
+            animation: netBulge 0.4s ease-in-out;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 min-h-screen text-white flex flex-col justify-between">
-
-<!-- Header -->
-<header class="w-full py-6 px-8 flex justify-between items-center border-b border-indigo-800/50 bg-black/20 backdrop-blur-md">
-    <div class="flex items-center space-x-3">
-        <span class="text-3xl">🏆</span>
-        <h1 class="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-yellow-400 to-amber-200 bg-clip-text text-transparent">MATH WORLD CUP</h1>
-    </div>
-    <div id="user-status" class="hidden flex items-center space-x-4 bg-indigo-950/80 px-4 py-2 rounded-full border border-indigo-700/50">
-        <span id="display-country-flag" class="text-2xl"></span>
-        <span id="display-country-name" class="font-semibold text-sm"></span>
-        <span class="text-xs bg-yellow-500/20 text-yellow-300 px-2.5 py-1 rounded-full font-bold border border-yellow-500/30">Score: <span id="display-score">0</span></span>
-    </div>
-</header>
-
-<!-- Main Container -->
-<main class="flex-grow flex items-center justify-center p-4">
-    
-    <!-- Screen 1: Country & Player Selection -->
-    <div id="screen-setup" class="w-full max-w-xl bg-indigo-950/60 backdrop-blur-xl border border-indigo-800/60 rounded-2xl p-8 shadow-2xl text-center">
-        <h2 class="text-3xl font-bold mb-2 text-yellow-400">Choose Your Nation</h2>
-        <p class="text-indigo-200 text-sm mb-6">Represent your country and lead them to global mathematical glory!</p>
-        
-        <div class="mb-6 text-left">
-            <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">Player Name</label>
-            <input type="text" id="player-name-input" placeholder="Enter your name..." class="w-full px-4 py-3 bg-indigo-900/50 border border-indigo-700/60 rounded-xl focus:outline-none focus:border-yellow-400 text-white placeholder-indigo-400">
-        </div>
-
-        <div class="mb-6 text-left">
-            <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">Select Country</label>
-            <select id="country-select" class="w-full px-4 py-3 bg-indigo-900/50 border border-indigo-700/60 rounded-xl focus:outline-none focus:border-yellow-400 text-white">
-                <option value="🇦🇫|Afghanistan">🇦🇫 Afghanistan</option>
-                <option value="🇦🇱|Albania">🇦🇱 Albania</option>
-                <option value="🇩🇿|Algeria">🇩🇿 Algeria</option>
-                <option value="🇦🇷|Argentina">🇦🇷 Argentina</option>
-                <option value="🇦🇲|Armenia">🇦🇲 Armenia</option>
-                <option value="🇦🇺|Australia">🇦🇺 Australia</option>
-                <option value="🇦🇹|Austria">🇦🇹 Austria</option>
-                <option value="🇦🇿|Azerbaijan">🇦🇿 Azerbaijan</option>
-                <option value="🇧🇭|Bahrain">🇧🇭 Bahrain</option>
-                <option value="🇧🇩|Bangladesh">🇧🇩 Bangladesh</option>
-                <option value="🇧🇪|Belgium">🇧🇪 Belgium</option>
-                <option value="🇧🇴|Bolivia">🇧🇴 Bolivia</option>
-                <option value="🇧🇦|Bosnia and Herzegovina">🇧🇦 Bosnia and Herzegovina</option>
-                <option value="🇧🇷|Brazil">🇧🇷 Brazil</option>
-                <option value="🇧🇬|Bulgaria">🇧🇬 Bulgaria</option>
-                <option value="🇨🇦|Canada">🇨🇦 Canada</option>
-                <option value="🇨🇱|Chile">🇨🇱 Chile</option>
-                <option value="🇨🇳|China">🇨🇳 China</option>
-                <option value="🇨🇴|Colombia">🇨🇴 Colombia</option>
-                <option value="🇨🇷|Costa Rica">🇨🇷 Costa Rica</option>
-                <option value="🇭🇷|Croatia">🇭🇷 Croatia</option>
-                <option value="🇨🇺|Cuba">🇨🇺 Cuba</option>
-                <option value="🇨🇾|Cyprus">🇨🇾 Cyprus</option>
-                <option value="🇨🇿|Czech Republic">🇨🇿 Czech Republic</option>
-                <option value="🇩🇰|Denmark">🇩🇰 Denmark</option>
-                <option value="🇩🇴|Dominican Republic">🇩🇴 Dominican Republic</option>
-                <option value="🇪🇨|Ecuador">🇪🇨 Ecuador</option>
-                <option value="🇪🇬|Egypt">🇪🇬 Egypt</option>
-                <option value="🇸🇻|El Salvador">🇸🇻 El Salvador</option>
-                <option value="🇪🇪|Estonia">🇪🇪 Estonia</option>
-                <option value="🇪🇹|Ethiopia">🇪🇹 Ethiopia</option>
-                <option value="🇫🇮|Finland">🇫🇮 Finland</option>
-                <option value="🇫🇷|France">🇫🇷 France</option>
-                <option value="🇬🇪|Georgia">🇬🇪 Georgia</option>
-                <option value="🇩🇪|Germany">🇩🇪 Germany</option>
-                <option value="🇬🇭|Ghana">🇬🇭 Ghana</option>
-                <option value="🇬🇷|Greece">🇬🇷 Greece</option>
-                <option value="🇬🇹|Guatemala">🇬🇹 Guatemala</option>
-                <option value="🇭🇳|Honduras">🇭🇳 Honduras</option>
-                <option value="🇭🇺|Hungary">🇭🇺 Hungary</option>
-                <option value="🇮🇸|Iceland">🇮🇸 Iceland</option>
-                <option value="🇮🇳|India">🇮🇳 India</option>
-                <option value="🇮🇩|Indonesia">🇮🇩 Indonesia</option>
-                <option value="🇮🇷|Iran">🇮🇷 Iran</option>
-                <option value="🇮🇶|Iraq">🇮🇶 Iraq</option>
-                <option value="🇮🇪|Ireland">🇮🇪 Ireland</option>
-                <option value="🇮🇱|Israel">🇮🇱 Israel</option>
-                <option value="🇮🇹|Italy">🇮🇹 Italy</option>
-                <option value="🇯🇲|Jamaica">🇯🇲 Jamaica</option>
-                <option value="🇯🇵|Japan">🇯🇵 Japan</option>
-                <option value="🇯🇴|Jordan">🇯🇴 Jordan</option>
-                <option value="🇰🇿|Kazakhstan">🇰🇿 Kazakhstan</option>
-                <option value="🇰🇪|Kenya">🇰🇪 Kenya</option>
-                <option value="🇰🇼|Kuwait">🇰🇼 Kuwait</option>
-                <option value="🇱🇻|Latvia">🇱🇻 Latvia</option>
-                <option value="🇱🇧|Lebanon">🇱🇧 Lebanon</option>
-                <option value="🇱🇹|Lithuania">🇱🇹 Lithuania</option>
-                <option value="🇱🇺|Luxembourg">🇱🇺 Luxembourg</option>
-                <option value="🇲🇾|Malaysia">🇲🇾 Malaysia</option>
-                <option value="🇲🇹|Malta">🇲🇹 Malta</option>
-                <option value="🇲🇽|Mexico">🇲🇽 Mexico</option>
-                <option value="🇲🇩|Moldova">🇲🇩 Moldova</option>
-                <option value="🇲🇦|Morocco">🇲🇦 Morocco</option>
-                <option value="🇳🇵|Nepal">🇳🇵 Nepal</option>
-                <option value="🇳🇱|Netherlands">🇳🇱 Netherlands</option>
-                <option value="🇳🇿|New Zealand">🇳🇿 New Zealand</option>
-                <option value="🇳🇮|Nicaragua">🇳🇮 Nicaragua</option>
-                <option value="🇳🇬|Nigeria">🇳🇬 Nigeria</option>
-                <option value="🇳🇴|Norway">🇳🇴 Norway</option>
-                <option value="🇴🇲|Oman">🇴🇲 Oman</option>
-                <option value="🇵🇰|Pakistan">🇵🇰 Pakistan</option>
-                <option value="🇵🇸|Palestine">🇵🇸 Palestine</option>
-                <option value="🇵🇦|Panama">🇵🇦 Panama</option>
-                <option value="🇵🇾|Paraguay">🇵🇾 Paraguay</option>
-                <option value="🇵🇪|Peru">🇵🇪 Peru</option>
-                <option value="🇵🇭|Philippines">🇵🇭 Philippines</option>
-                <option value="🇵🇱|Poland">🇵🇱 Poland</option>
-                <option value="🇵🇹|Portugal">🇵🇹 Portugal</option>
-                <option value="🇶🇦|Qatar">🇶🇦 Qatar</option>
-                <option value="🇷🇴|Romania">🇷🇴 Romania</option>
-                <option value="🇸🇦|Saudi Arabia">🇸🇦 Saudi Arabia</option>
-                <option value="🇸🇳|Senegal">🇸🇳 Senegal</option>
-                <option value="🇷🇸|Serbia">🇷🇸 Serbia</option>
-                <option value="🇸🇬|Singapore">🇸🇬 Singapore</option>
-                <option value="🇸🇰|Slovakia">🇸🇰 Slovakia</option>
-                <option value="🇸🇮|Slovenia">🇸🇮 Slovenia</option>
-                <option value="🇿🇦|South Africa">🇿🇦 South Africa</option>
-                <option value="🇰🇷|South Korea">🇰🇷 South Korea</option>
-                <option value="🇪🇸|Spain">🇪🇸 Spain</option>
-                <option value="🇱🇰|Sri Lanka">🇱🇰 Sri Lanka</option>
-                <option value="🇸🇪|Sweden">🇸🇪 Sweden</option>
-                <option value="🇨🇭|Switzerland">🇨🇭 Switzerland</option>
-                <option value="🇹🇼|Taiwan">🇹🇼 Taiwan</option>
-                <option value="🇹🇭|Thailand">🇹🇭 Thailand</option>
-                <option value="🇹🇳|Tunisia">🇹🇳 Tunisia</option>
-                <option value="🇹🇷|Turkey">🇹🇷 Turkey</option>
-                <option value="🇺🇦|Ukraine">🇺🇦 Ukraine</option>
-                <option value="🇦🇪|United Arab Emirates">🇦🇪 United Arab Emirates</option>
-                <option value="🇬🇧|United Kingdom">🇬🇧 United Kingdom</option>
-                <option value="🇺🇸|United States">🇺🇸 United States</option>
-                <option value="🇺🇾|Uruguay">🇺🇾 Uruguay</option>
-                <option value="🇻🇪|Venezuela">🇻🇪 Venezuela</option>
-                <option value="🇻🇳|Vietnam">🇻🇳 Vietnam</option>
-            </select>
-        </div>
-
-        <button onclick="startGame()" class="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg hover:from-yellow-400 hover:to-amber-400 transition transform hover:-translate-y-0.5">
-            ENTER TOURNAMENT
-        </button>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between selection:bg-yellow-400 selection:text-slate-900">
+    <!-- STADIUM BACKGROUND LIGHTING EFFECTS -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute top-1/4 -right-32 w-96 h-96 bg-yellow-500/15 rounded-full blur-3xl animate-pulse" style="animation-delay: 1.5s;"></div>
+        <div class="absolute bottom-0 left-1/3 w-full h-80 bg-emerald-600/10 rounded-full blur-3xl"></div>
     </div>
 
-    <!-- Screen 2: Game Tournament Arena -->
-    <div id="screen-game" class="hidden w-full max-w-2xl bg-indigo-950/60 backdrop-blur-xl border border-indigo-800/60 rounded-2xl p-8 shadow-2xl">
-        <!-- Tournament Progress Bar -->
-        <div class="mb-6">
-            <div class="flex justify-between items-center text-xs font-semibold text-indigo-300 mb-2">
-                <span id="stage-badge" class="px-3 py-1 bg-indigo-800/80 rounded-full text-yellow-400">GROUP STAGE</span>
-                <span>Question <span id="current-q-num">1</span> / 10</span>
+    <!-- MAIN APP CONTAINER -->
+    <div class="relative z-10 max-w-5xl mx-auto px-4 py-4 w-full flex-1 flex flex-col justify-between">
+        <!-- HEADER -->
+        <header class="flex items-center justify-between py-4 border-b border-slate-800/80 mb-6 bg-slate-900/60 backdrop-blur-md px-6 rounded-2xl border border-white/5 shadow-2xl">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-gradient-to-tr from-yellow-500 to-amber-300 rounded-xl shadow-lg shadow-yellow-500/20">
+                    <span class="text-3xl block transform hover:rotate-12 transition">⚽</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-500 uppercase">Math World Cup</h1>
+                    <p class="text-xs text-emerald-400 font-bold tracking-widest uppercase flex items-center gap-1">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Addition & Subtraction Tournament
+                    </p>
+                </div>
             </div>
-            <div class="w-full bg-indigo-900/60 rounded-full h-2.5 overflow-hidden border border-indigo-800/40">
-                <div id="progress-bar" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-2.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+            <div class="flex items-center gap-3">
+                <button onclick="openTutorialModal()" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700 border border-yellow-400/40 hover:border-yellow-400 text-yellow-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg backdrop-blur">
+                    <span class="text-base">❓</span> How to Play
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN MENU / LEVEL SELECTION HUB -->
+        <div id="main-menu" class="space-y-6">
+            <!-- QUICK START GUIDE BOX & PLAY BUTTON -->
+            <div class="bg-gradient-to-br from-emerald-950/80 via-slate-900/90 to-slate-950 border-2 border-emerald-500/40 rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-3 max-w-xl">
+                    <h2 class="text-2xl font-black text-yellow-400 flex items-center gap-2">
+                        <span class="text-3xl">🏆</span> Math World Cup Tournament
+                    </h2>
+                    <p class="text-sm text-slate-300">
+                        Solve addition and subtraction math problems to take kicks, score 10 goals per stage, and win the World Cup Trophy!
+                    </p>
+                    <div class="grid grid-cols-3 gap-2 pt-2 text-xs">
+                        <div class="bg-slate-900/70 p-2.5 rounded-xl border border-slate-800">
+                            <span class="text-yellow-400 font-black block mb-0.5">1. Select Level</span>
+                            Unlock 10 stages
+                        </div>
+                        <div class="bg-slate-900/70 p-2.5 rounded-xl border border-slate-800">
+                            <span class="text-emerald-400 font-black block mb-0.5">2. Score 10 Goals</span>
+                            Solve math to kick ⚽
+                        </div>
+                        <div class="bg-slate-900/70 p-2.5 rounded-xl border border-slate-800">
+                            <span class="text-amber-400 font-black block mb-0.5">3. Earn Stars</span>
+                            High accuracy = ⭐️⭐️⭐️
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BIG PLAY BUTTON -->
+                <button onclick="startLevel(1)" class="w-full md:w-auto px-10 py-5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-slate-950 font-black text-2xl rounded-2xl shadow-xl shadow-emerald-500/30 transform hover:scale-105 active:scale-95 transition border-2 border-emerald-300 flex items-center justify-center gap-3 tracking-wider uppercase">
+                    <span>⚽ PLAY NOW</span>
+                    <span class="text-xl">➔</span>
+                </button>
+            </div>
+
+            <!-- LEVEL SELECT HEADER -->
+            <div class="flex items-center justify-between pt-2">
+                <h3 class="text-xl font-black text-slate-200 flex items-center gap-2">
+                    <span>🏆</span> Select Tournament Stage
+                </h3>
+            </div>
+
+            <!-- LEVEL HUB GRID -->
+            <div id="level-hub-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamic level cards populated by JavaScript -->
             </div>
         </div>
 
-        <!-- Timer & Question Info -->
-        <div class="flex justify-between items-center mb-6">
-            <div class="text-indigo-200 text-sm">
-                Time Remaining: <span id="timer-display" class="font-bold text-lg text-yellow-400">15s</span>
+        <!-- MATCH STADIUM SCREEN -->
+        <div id="match-screen" class="hidden space-y-4">
+            <!-- TOP MATCH SCOREBOARD -->
+            <div class="bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-2xl backdrop-blur-md">
+                <button onclick="returnToMenu()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition">
+                    ← Stages
+                </button>
+
+                <div class="flex items-center gap-6">
+                    <div class="text-center">
+                        <span class="text-xs uppercase font-bold text-slate-400 block">Stage</span>
+                        <span id="current-stage-title" class="text-sm font-black text-yellow-400">Level 1</span>
+                    </div>
+
+                    <div class="bg-slate-950 px-6 py-2 rounded-xl border border-slate-800 flex items-center gap-4">
+                        <div class="text-center">
+                            <span class="text-2xl font-black text-emerald-400" id="match-goals">0</span>
+                            <span class="text-[10px] text-slate-400 uppercase font-bold block">Goals</span>
+                        </div>
+                        <span class="text-slate-600 text-xl font-bold">/</span>
+                        <div class="text-center">
+                            <span class="text-sm font-bold text-slate-400" id="match-target-goals">10</span>
+                            <span class="text-[10px] text-slate-500 uppercase font-bold block">Target</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <span class="text-xs uppercase font-bold text-slate-400 block">Shots</span>
+                        <span id="match-shots" class="text-sm font-black text-white">0</span>
+                    </div>
+                </div>
+
+                <div id="timer-box" class="hidden text-center bg-red-950/60 border border-red-500/40 px-3 py-1 rounded-xl">
+                    <span class="text-[10px] uppercase font-bold text-red-400 block">Shot Clock</span>
+                    <span id="timer-count" class="text-lg font-black text-red-300">15s</span>
+                </div>
             </div>
-            <div class="text-sm font-semibold text-indigo-300">
-                Difficulty: <span id="difficulty-display" class="text-emerald-400">Easy</span>
+
+            <!-- SOCCER PITCH STADIUM CANVAS AREA -->
+            <div id="stadium-pitch" class="relative h-64 sm:h-72 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-950 rounded-3xl border-4 border-slate-800 overflow-hidden shadow-2xl flex flex-col justify-between p-4">
+                <!-- GOAL NET -->
+                <div id="goal-container" class="relative mx-auto w-64 sm:w-80 h-28 border-4 border-white bg-slate-950/40 rounded-t-xl overflow-hidden flex items-center justify-center border-b-0 shadow-inner">
+                    <div class="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px] opacity-20"></div>
+                    <!-- GOALKEEPER -->
+                    <div id="goalkeeper" class="text-4xl transition-all duration-300 transform translate-y-2 z-10">🧤</div>
+                </div>
+
+                <!-- COMMENTARY DISPLAY -->
+                <div id="commentary-banner" class="text-center font-bold text-sm sm:text-base text-yellow-300 min-h-[24px]">
+                    Ready to take the shot!
+                </div>
+
+                <!-- SOCCER BALL -->
+                <div class="relative flex justify-center pb-2">
+                    <div id="soccer-ball" class="text-5xl transition-transform duration-300 z-20 drop-shadow-2xl cursor-default">⚽</div>
+                </div>
+            </div>
+
+            <!-- MATH QUESTION & CONTROLS BOX -->
+            <div class="bg-slate-900/90 border-2 border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md space-y-6">
+                <!-- QUESTION DISPLAY -->
+                <div class="flex items-center justify-between bg-slate-950/80 p-6 rounded-2xl border border-slate-800">
+                    <div class="flex items-center gap-4">
+                        <span id="equation-display" class="text-3xl sm:text-4xl font-black text-white tracking-wider">
+                            12 + 5 = ?
+                        </span>
+                    </div>
+
+                    <button onclick="showCoachHint()" class="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 rounded-xl text-xs font-bold transition flex items-center gap-2">
+                        💡 Coach Hint
+                    </button>
+                </div>
+
+                <!-- MULTIPLE CHOICE OPTIONS GRID -->
+                <div id="options-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <!-- Dynamic option buttons -->
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Question Display Box -->
-        <div class="bg-indigo-900/40 border border-indigo-700/50 rounded-2xl p-8 mb-8 text-center min-h-[160px] flex flex-col justify-center items-center shadow-inner">
-            <h3 id="question-text" class="text-4xl md:text-5xl font-black text-white tracking-wide">
-                <!-- Question injected via JS -->
+    <!-- COACH HINT MODAL -->
+    <div id="hint-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-yellow-500/40 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 class="text-xl font-black text-yellow-400 flex items-center gap-2">
+                <span>💡</span> Coach's Math Hint
             </h3>
-        </div>
-
-        <!-- Answer Options Grid -->
-        <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Buttons injected via JS -->
+            <p id="hint-text" class="text-slate-300 text-sm leading-relaxed bg-slate-950 p-4 rounded-xl border border-slate-800">
+                Hint explanation goes here...
+            </p>
+            <button onclick="closeHintModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm transition">
+                Got It!
+            </button>
         </div>
     </div>
 
-    <!-- Screen 3: Leaderboard & Results -->
-    <div id="screen-results" class="hidden w-full max-w-2xl bg-indigo-950/60 backdrop-blur-xl border border-indigo-800/60 rounded-2xl p-8 shadow-2xl text-center">
-        <h2 class="text-4xl font-extrabold text-yellow-400 mb-2">Tournament Complete!</h2>
-        <p class="text-indigo-200 mb-6">Here is how your nation performed in the World Cup.</p>
-
-        <!-- Final Stats Card -->
-        <div class="bg-indigo-900/50 border border-indigo-700/60 rounded-xl p-6 mb-8 flex items-center justify-around">
-            <div>
-                <p class="text-xs text-indigo-300 uppercase font-semibold">Representative</p>
-                <p id="res-player-name" class="text-lg font-bold text-white">-</p>
+    <!-- HOW TO PLAY TUTORIAL MODAL -->
+    <div id="tutorial-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-xl font-black text-yellow-400 flex items-center gap-2">
+                    <span>⚽</span> How to Play Math World Cup
+                </h3>
+                <button onclick="closeTutorialModal()" class="text-slate-400 hover:text-white font-bold text-xl">✕</button>
             </div>
-            <div class="h-10 w-[1px] bg-indigo-700/50"></div>
-            <div>
-                <p class="text-xs text-indigo-300 uppercase font-semibold">Nation</p>
-                <p id="res-country-name" class="text-lg font-bold text-white">-</p>
+            <div class="space-y-3 text-slate-300 text-sm">
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                    <span class="font-bold text-emerald-400 block mb-1">3. Score 10 Goals to Win</span>
+                    Every correct answer scores ⚽ 1 Goal! Score 10 goals to complete the stage.
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                    <span class="font-bold text-emerald-400 block mb-1">2. Answer Math Questions</span>
+                    Read the addition or subtraction equation shown on screen and select the correct answer.
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                    <span class="font-bold text-emerald-400 block mb-1">3. Score 50 Goals to Win</span>
+                    Every correct answer scores ⚽ 1 Goal! Score 50 goals to complete the stage.
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                    <span class="font-bold text-emerald-400 block mb-1">4. Solve Missing Terms</span>
+                    In higher rounds like `15 + ? = 32`, subtract 15 from 32 to find the missing number (`32 - 15 = 17`).
+                </div>
             </div>
-            <div class="h-10 w-[1px] bg-indigo-700/50"></div>
-            <div>
-                <p class="text-xs text-indigo-300 uppercase font-semibold">Final Score</p>
-                <p id="res-final-score" class="text-2xl font-black text-yellow-400">0</p>
-            </div>
+            <button onclick="closeTutorialModal()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 font-black rounded-xl text-sm transition">
+                Let's Play!
+            </button>
         </div>
-
-        <!-- Global Leaderboard -->
-        <h3 class="text-xl font-bold text-left text-indigo-200 mb-4 flex items-center gap-2">
-            <span>🌍</span> Global Standings
-        </h3>
-        <div id="leaderboard-list" class="max-h-60 overflow-y-auto space-y-2 mb-8 pr-1">
-            <!-- Leaderboard items injected via JS -->
-        </div>
-
-        <button onclick="restartGame()" class="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg hover:from-yellow-400 hover:to-amber-400 transition transform hover:-translate-y-0.5">
-            PLAY AGAIN
-        </button>
     </div>
-</main>
 
-<!-- Footer -->
-<footer class="py-4 text-center text-xs text-indigo-400/60 border-t border-indigo-900/30">
-    Math World Cup &copy; Addition & Subtraction Championship
-</footer>
+    <!-- WIN VICTORY MODAL -->
+    <div id="victory-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-yellow-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl space-y-6">
+            <div class="text-6xl animate-bounce">🏆</div>
+            <div>
+                <h3 class="text-3xl font-black text-yellow-400">STAGE CLEARED!</h3>
+                <p id="victory-level-name" class="text-slate-400 font-bold text-sm mt-1">Level 1</p>
+            </div>
+            <div id="victory-stars" class="text-4xl tracking-widest">
+                ⭐️ ⭐️ ⭐️
+            </div>
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-slate-300 text-sm space-y-1">
+                <p>Total Goals: <span class="font-black text-emerald-400">10</span></p>
+                <p>Accuracy: <span id="victory-accuracy" class="font-black text-yellow-400">100%</span></p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="returnToMenu()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition">
+                    Stages Hub
+                </button>
+                <button id="next-level-btn" onclick="playNextLevel()" class="flex-1 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-950 font-black rounded-xl transition">
+                    Next Stage ➔
+                </button>
+            </div>
+        </div>
+    </div>
 
-<script>
-    // Game State Variables
-    let playerName = "";
-    let countryName = "";
-    let countryFlag = "";
-    let currentScore = 0;
-    let questionIndex = 0;
-    let timer = null;
-    let secondsLeft = 15;
-    let currentQuestion = null;
+    <script>
+        // --- TOURNAMENT LEVELS CONFIGURATION (10 LEVELS) ---
+        const TOURNAMENT_LEVELS = [
+            { id: 1, name: "Level 1: Group Stage (Warm-up)", min: 1, max: 10, ops: ["+"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Single digit addition (1-10)" },
+            { id: 2, name: "Level 2: Group Stage (Subtraction)", min: 1, max: 12, ops: ["-"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Basic subtraction (1-12)" },
+            { id: 3, name: "Level 3: Round of 32", min: 5, max: 20, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Mixed Addition & Subtraction (1-20)" },
+            { id: 4, name: "Level 4: Round of 16", min: 10, max: 30, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Double Digits without carrying (10-30)" },
+            { id: 5, name: "Level 5: Pre-Quarter Finals", min: 10, max: 50, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Double Digits with carrying/borrowing (10-50)" },
+            { id: 6, name: "Level 6: Quarter-Finals", min: 10, max: 50, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: true, desc: "Missing Number Equations (e.g. 14 + ? = 35)" },
+            { id: 7, name: "Level 7: Semi-Finals", min: 20, max: 80, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: true, desc: "Advanced Missing Numbers (20-80)" },
+            { id: 8, name: "Level 8: Bronze Medal Match", min: 20, max: 100, ops: ["+", "-"], targetGoals: 10, timer: 15, missingTerm: false, desc: "15s Shot Clock Challenge (20-100)" },
+            { id: 9, name: "Level 9: Grand Championship", min: 50, max: 150, ops: ["+", "-"], targetGoals: 10, timer: 12, missingTerm: true, desc: "12s Shot Clock Missing Term Sprint" },
+            { id: 10, name: "Level 10: World Cup Penalty Final", min: 50, max: 200, ops: ["+", "-"], targetGoals: 10, timer: 8, missingTerm: true, desc: "Ultimate 8s Penalty Shootout (50-200)" }
+        ];
 
-    // Leaderboard Data (Starts empty to track real players only)
-    let leaderboard = [];
+        const GOAL_COMMENTARIES = [
+            "GOOOOOAL! Absolute rocket into the top corner!",
+            "WHAT A STRIKE! The keeper had no chance!",
+            "GOAL! Pure mathematical precision!",
+            "IN THE NET! Incredible goal!"
+        ];
 
-    // Helper: Random Integer generator
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+        const MISS_COMMENTARIES = [
+            "SAVED! The goalkeeper blocks the shot!",
+            "MISSED! High over the crossbar!",
+            "DENIED! Great save by the keeper!"
+        ];
 
-    // Helper: Shuffle Array
-    function shuffleArray(array) {
-        return array.sort(() => Math.random() - 0.5);
-    }
+        // --- GAME STATE ---
+        let currentLevel = null;
+        let currentQuestion = null;
+        let goalsScored = 0;
+        let totalShots = 0;
+        let isProcessingShot = false;
+        let timerInterval = null;
+        let timeLeft = 0;
+        let userLevelStars = JSON.parse(localStorage.getItem("mathWorldCupStars") || "{}");
 
-    // Generate addition and subtraction math questions based on stage
-    function generateQuestion(index) {
-        let text = "";
-        let answer = 0;
-
-        if (index < 4) { // Group Stage (Easy: 2-digit to 3-digit add/sub)
-            const isAddition = Math.random() > 0.5;
-            if (isAddition) {
-                const num1 = getRandomInt(15, 99);
-                const num2 = getRandomInt(12, 99);
-                text = `${num1} + ${num2}`;
-                answer = num1 + num2;
-            } else {
-                const num1 = getRandomInt(30, 150);
-                const num2 = getRandomInt(10, num1 - 5);
-                text = `${num1} - ${num2}`;
-                answer = num1 - num2;
-            }
-        } else if (index < 8) { // Knockout Stage (Medium: 3-digit and 4-digit add/sub)
-            const isAddition = Math.random() > 0.5;
-            if (isAddition) {
-                const num1 = getRandomInt(120, 650);
-                const num2 = getRandomInt(150, 750);
-                text = `${num1} + ${num2}`;
-                answer = num1 + num2;
-            } else {
-                const num1 = getRandomInt(400, 1200);
-                const num2 = getRandomInt(100, num1 - 50);
-                text = `${num1} - ${num2}`;
-                answer = num1 - num2;
-            }
-        } else { // Grand Finals (Hard: 3-step arithmetic challenges)
-            const type = getRandomInt(1, 3);
-            if (type === 1) {
-                const a = getRandomInt(100, 400);
-                const b = getRandomInt(50, 300);
-                const c = getRandomInt(30, 200);
-                text = `${a} + ${b} - ${c}`;
-                answer = a + b - c;
-            } else if (type === 2) {
-                const a = getRandomInt(300, 800);
-                const b = getRandomInt(50, 250);
-                const c = getRandomInt(40, 200);
-                text = `${a} - ${b} + ${c}`;
-                answer = a - b + c;
-            } else {
-                const a = getRandomInt(200, 600);
-                const b = getRandomInt(150, 400);
-                const c = getRandomInt(50, 300);
-                text = `${a} + ${b} + ${c}`;
-                answer = a + b + c;
-            }
+        // --- SOUND EFFECTS (Web Audio API) ---
+        function playWhistleSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(2800, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(3200, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.25);
+            } catch (e) {}
         }
 
-        // Generate 3 unique wrong option choices
-        const options = new Set([answer]);
-        while (options.size < 4) {
-            const delta = getRandomInt(-15, 15);
-            const wrongOption = answer + (delta === 0 ? 5 : delta);
-            options.add(wrongOption);
-        }
+        // --- LEVEL HUB INITIALIZATION ---
+        function renderLevelHub() {
+            const grid = document.getElementById("level-hub-grid");
+            grid.innerHTML = "";
 
-        return {
-            text: text,
-            answer: answer,
-            options: shuffleArray(Array.from(options))
-        };
-    }
+            TOURNAMENT_LEVELS.forEach((lvl, index) => {
+                const stars = userLevelStars[lvl.id] || 0;
+                const isUnlocked = index === 0 || (userLevelStars[TOURNAMENT_LEVELS[index - 1].id] || 0) > 0;
 
-    // Start Game Function
-    function startGame() {
-        const nameInput = document.getElementById('player-name-input').value.trim();
-        const countryValue = document.getElementById('country-select').value;
-        const [flag, name] = countryValue.split('|');
+                const card = document.createElement("div");
+                card.className = `p-5 rounded-2xl border-2 transition backdrop-blur-md flex flex-col justify-between ${
+                    isUnlocked 
+                        ? "bg-slate-900/80 border-slate-700 hover:border-yellow-400/60 cursor-pointer shadow-lg hover:scale-[1.02]" 
+                        : "bg-slate-950/50 border-slate-900 opacity-60 cursor-not-allowed"
+                }`;
 
-        playerName = nameInput || "Challenger";
-        countryFlag = flag;
-        countryName = name;
-        currentScore = 0;
-        questionIndex = 0;
-
-        // Header Update
-        document.getElementById('display-country-flag').textContent = countryFlag;
-        document.getElementById('display-country-name').textContent = countryName;
-        document.getElementById('display-score').textContent = currentScore;
-        document.getElementById('user-status').classList.remove('hidden');
-
-        // Toggle Screens
-        document.getElementById('screen-setup').classList.add('hidden');
-        document.getElementById('screen-game').classList.remove('hidden');
-
-        loadNextQuestion();
-    }
-
-    // Load Question into UI
-    function loadNextQuestion() {
-        if (questionIndex >= 10) {
-            endGame();
-            return;
-        }
-
-        // Update Header & Stages
-        document.getElementById('current-q-num').textContent = questionIndex + 1;
-        document.getElementById('progress-bar').style.width = `${((questionIndex + 1) / 10) * 100}%`;
-
-        const stageBadge = document.getElementById('stage-badge');
-        const diffDisplay = document.getElementById('difficulty-display');
-
-        if (questionIndex < 4) {
-            stageBadge.textContent = "GROUP STAGE";
-            stageBadge.className = "px-3 py-1 bg-indigo-800/80 rounded-full text-yellow-400";
-            diffDisplay.textContent = "Easy";
-            diffDisplay.className = "text-emerald-400";
-        } else if (questionIndex < 8) {
-            stageBadge.textContent = "KNOCKOUT STAGE";
-            stageBadge.className = "px-3 py-1 bg-amber-900/80 rounded-full text-amber-300";
-            diffDisplay.textContent = "Medium";
-            diffDisplay.className = "text-amber-400";
-        } else {
-            stageBadge.textContent = "GRAND FINALS";
-            stageBadge.className = "px-3 py-1 bg-red-900/80 rounded-full text-red-300 font-bold";
-            diffDisplay.textContent = "Hard";
-            diffDisplay.className = "text-red-400";
-        }
-
-        // Generate Math Question
-        currentQuestion = generateQuestion(questionIndex);
-        document.getElementById('question-text').textContent = currentQuestion.text;
-
-        // Render Options
-        const grid = document.getElementById('options-grid');
-        grid.innerHTML = '';
-        currentQuestion.options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = "py-4 px-6 bg-indigo-900/50 hover:bg-indigo-800/70 border border-indigo-700/60 hover:border-yellow-400 text-white font-bold rounded-xl transition text-xl shadow-md transform active:scale-95";
-            btn.textContent = opt;
-            btn.onclick = () => selectAnswer(opt, btn);
-            grid.appendChild(btn);
-        });
-
-        startTimer();
-    }
-
-    // Timer Logic
-    function startTimer() {
-        clearInterval(timer);
-        secondsLeft = 15;
-        document.getElementById('timer-display').textContent = `${secondsLeft}s`;
-
-        timer = setInterval(() => {
-            secondsLeft--;
-            document.getElementById('timer-display').textContent = `${secondsLeft}s`;
-
-            if (secondsLeft <= 0) {
-                clearInterval(timer);
-                handleTimeout();
-            }
-        }, 1000);
-    }
-
-    // Answer Logic
-    function selectAnswer(selected, button) {
-        clearInterval(timer);
-        const allButtons = document.querySelectorAll('#options-grid button');
-        allButtons.forEach(b => b.disabled = true);
-
-        if (selected === currentQuestion.answer) {
-            button.classList.remove('bg-indigo-900/50', 'border-indigo-700/60');
-            button.classList.add('bg-emerald-600', 'border-emerald-400');
-            
-            // Add Base points + Speed bonus
-            const bonus = secondsLeft * 5;
-            currentScore += (100 + bonus);
-            document.getElementById('display-score').textContent = currentScore;
-        } else {
-            button.classList.remove('bg-indigo-900/50', 'border-indigo-700/60');
-            button.classList.add('bg-red-600', 'border-red-400');
-
-            // Highlight Correct Answer
-            allButtons.forEach(b => {
-                if (parseInt(b.textContent) === currentQuestion.answer) {
-                    b.classList.remove('bg-indigo-900/50', 'border-indigo-700/60');
-                    b.classList.add('bg-emerald-600', 'border-emerald-400');
+                let starDisplay = "";
+                for (let i = 1; i <= 3; i++) {
+                    starDisplay += i <= stars ? "⭐️" : "🏽";
                 }
+
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Stage ${lvl.id}</span>
+                            <span>${isUnlocked ? starDisplay : "🔒"}</span>
+                        </div>
+                        <h4 class="text-lg font-black text-white">${lvl.name}</h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">${lvl.desc}</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-slate-500">Target: 10 Goals</span>
+                        ${isUnlocked 
+                            ? `<button onclick="startLevel(${lvl.id})" class="px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black rounded-xl text-xs transition">PLAY</button>`
+                            : `<span class="text-xs font-bold text-slate-600">Locked</span>`
+                        }
+                    </div>
+                `;
+
+                grid.appendChild(card);
             });
         }
 
-        setTimeout(() => {
-            questionIndex++;
-            loadNextQuestion();
-        }, 1200);
-    }
+        // --- MATCH MANAGEMENT ---
+        function startLevel(levelId) {
+            currentLevel = TOURNAMENT_LEVELS.find(l => l.id === levelId) || TOURNAMENT_LEVELS[0];
+            goalsScored = 0;
+            totalShots = 0;
+            isProcessingShot = false;
 
-    // Time Expired Logic
-    function handleTimeout() {
-        const allButtons = document.querySelectorAll('#options-grid button');
-        allButtons.forEach(b => {
-            b.disabled = true;
-            if (parseInt(b.textContent) === currentQuestion.answer) {
-                b.classList.remove('bg-indigo-900/50', 'border-indigo-700/60');
-                b.classList.add('bg-emerald-600', 'border-emerald-400');
+            document.getElementById("main-menu").classList.add("hidden");
+            document.getElementById("match-screen").classList.remove("hidden");
+            document.getElementById("current-stage-title").innerText = `Level ${currentLevel.id}`;
+            document.getElementById("match-target-goals").innerText = currentLevel.targetGoals;
+            document.getElementById("match-goals").innerText = "0";
+            document.getElementById("match-shots").innerText = "0";
+
+            const timerBox = document.getElementById("timer-box");
+            if (currentLevel.timer > 0) {
+                timerBox.classList.remove("hidden");
+            } else {
+                timerBox.classList.add("hidden");
             }
-        });
 
-        setTimeout(() => {
-            questionIndex++;
-            loadNextQuestion();
-        }, 1200);
-    }
+            playWhistleSound();
+            generateQuestion();
+        }
 
-    // End Game and Show Results
-    function endGame() {
-        document.getElementById('screen-game').classList.add('hidden');
-        document.getElementById('screen-results').classList.remove('hidden');
+        function returnToMenu() {
+            clearInterval(timerInterval);
+            document.getElementById("match-screen").classList.add("hidden");
+            document.getElementById("victory-modal").classList.add("hidden");
+            document.getElementById("main-menu").classList.remove("hidden");
+            renderLevelHub();
+        }
 
-        document.getElementById('res-player-name').textContent = playerName;
-        document.getElementById('res-country-name').textContent = `${countryFlag} ${countryName}`;
-        document.getElementById('res-final-score').textContent = currentScore;
+        // --- QUESTION GENERATOR ---
+        function generateQuestion() {
+            if (goalsScored >= currentLevel.targetGoals) {
+                completeMatch();
+                return;
+            }
 
-        // Push player to Leaderboard
-        leaderboard.push({
-            player: playerName,
-            flag: countryFlag,
-            country: countryName,
-            score: currentScore
-        });
+            clearInterval(timerInterval);
+            if (currentLevel.timer > 0) {
+                startTimer();
+            }
 
-        // Sort Leaderboard
-        leaderboard.sort((a, b) => b.score - a.score);
+            const op = currentLevel.ops[Math.floor(Math.random() * currentLevel.ops.length)];
+            let num1, num2, answer;
 
-        // Render Leaderboard
-        const list = document.getElementById('leaderboard-list');
-        list.innerHTML = '';
-        leaderboard.slice(0, 8).forEach((item, index) => {
-            const isUser = item.player === playerName && item.score === currentScore;
-            const row = document.createElement('div');
-            row.className = `flex justify-between items-center px-4 py-3 rounded-xl border ${
-                isUser ? 'bg-yellow-500/20 border-yellow-400/50 text-yellow-300 font-bold' : 'bg-indigo-900/40 border-indigo-800/40 text-indigo-100'
-            }`;
-            row.innerHTML = `
-                <div class="flex items-center space-x-3">
-                    <span class="w-6 font-bold text-center text-sm ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-slate-300' : index === 2 ? 'text-amber-600' : 'text-indigo-400'}">#${index + 1}</span>
-                    <span>${item.flag}</span>
-                    <span class="text-sm font-semibold">${item.player} (${item.country})</span>
-                </div>
-                <span class="font-extrabold text-sm">${item.score} pts</span>
-            `;
-            list.appendChild(row);
-        });
-    }
+            if (op === "+") {
+                num1 = Math.floor(Math.random() * (currentLevel.max - currentLevel.min + 1)) + currentLevel.min;
+                num2 = Math.floor(Math.random() * (currentLevel.max - currentLevel.min + 1)) + currentLevel.min;
+                answer = num1 + num2;
+            } else {
+                num1 = Math.floor(Math.random() * (currentLevel.max - currentLevel.min + 1)) + currentLevel.min + 5;
+                num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
+                answer = num1 - num2;
+            }
 
-    // Restart Tournament
-    function restartGame() {
-        document.getElementById('screen-results').classList.add('hidden');
-        document.getElementById('screen-setup').classList.remove('hidden');
-        document.getElementById('user-status').classList.add('hidden');
-    }
-</script>
+            let equationStr = "";
+            let hint = "";
+
+            if (currentLevel.missingTerm) {
+                const isFirstMissing = Math.random() < 0.5;
+                if (op === "+") {
+                    if (isFirstMissing) {
+                        equationStr = `? + ${num2} = ${answer}`;
+                        hint = `To find the missing starting number, subtract ${num2} from ${answer}: (${answer} - ${num2} = ${num1}).`;
+                        currentQuestion = { answer: num1, hint };
+                    } else {
+                        equationStr = `${num1} + ? = ${answer}`;
+                        hint = `To find the missing number, subtract ${num1} from ${answer}: (${answer} - ${num1} = ${num2}).`;
+                        currentQuestion = { answer: num2, hint };
+                    }
+                } else {
+                    equationStr = `${num1} - ? = ${answer}`;
+                    hint = `To find the missing subtracted number, subtract ${answer} from ${num1}: (${num1} - ${answer} = ${num2}).`;
+                    currentQuestion = { answer: num2, hint };
+                }
+            } else {
+                equationStr = `${num1} ${op} ${num2} = ?`;
+                hint = op === "+" 
+                    ? `Add ${num1} and ${num2} together.` 
+                    : `Subtract ${num2} from ${num1}.`;
+                currentQuestion = { answer, hint };
+            }
+
+            document.getElementById("equation-display").innerText = equationStr;
+            renderOptions(currentQuestion.answer);
+        }
+
+        function renderOptions(correctAnswer) {
+            const grid = document.getElementById("options-grid");
+            grid.innerHTML = "";
+
+            const options = new Set([correctAnswer]);
+            while (options.size < 4) {
+                const offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+                const wrongOption = Math.max(1, correctAnswer + offset);
+                options.add(wrongOption);
+            }
+
+            const shuffled = Array.from(options).sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.onclick = () => submitShot(opt);
+                btn.className = "py-4 bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 border-2 border-slate-700 hover:border-yellow-300 text-white font-black text-2xl rounded-2xl transition shadow-lg transform active:scale-95";
+                btn.innerText = opt;
+                grid.appendChild(btn);
+            });
+        }
+
+        // --- SHOT LOGIC ---
+        function submitShot(selectedAnswer) {
+            if (isProcessingShot) return;
+            isProcessingShot = true;
+            clearInterval(timerInterval);
+            totalShots++;
+
+            const ball = document.getElementById("soccer-ball");
+            const keeper = document.getElementById("goalkeeper");
+            const commentary = document.getElementById("commentary-banner");
+
+            const isCorrect = selectedAnswer === currentQuestion.answer;
+
+            if (isCorrect) {
+                goalsScored++;
+                ball.className = "text-5xl animate-kick z-20";
+                keeper.style.transform = "translateX(0px)";
+                commentary.innerText = GOAL_COMMENTARIES[Math.floor(Math.random() * GOAL_COMMENTARIES.length)];
+                commentary.className = "text-center font-bold text-sm sm:text-base text-emerald-400";
+            } else {
+                const moveDirection = Math.random() < 0.5 ? -60 : 60;
+                keeper.style.transform = `translateX(${moveDirection}px)`;
+                commentary.innerText = MISS_COMMENTARIES[Math.floor(Math.random() * MISS_COMMENTARIES.length)];
+                commentary.className = "text-center font-bold text-sm sm:text-base text-red-400";
+            }
+
+            document.getElementById("match-goals").innerText = goalsScored;
+            document.getElementById("match-shots").innerText = totalShots;
+
+            setTimeout(() => {
+                ball.className = "text-5xl transition-transform duration-300 z-20 drop-shadow-2xl cursor-default";
+                keeper.style.transform = "translateX(0px)";
+                isProcessingShot = false;
+
+                if (goalsScored >= currentLevel.targetGoals) {
+                    completeMatch();
+                } else {
+                    generateQuestion();
+                }
+            }, 800);
+        }
+
+        function startTimer() {
+            timeLeft = currentLevel.timer;
+            document.getElementById("timer-count").innerText = `${timeLeft}s`;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer-count").innerText = `${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    submitShot(null); // Timeout count as miss
+                }
+            }, 1000);
+        }
+
+        // --- MATCH COMPLETION & VICTORY ---
+        function completeMatch() {
+            clearInterval(timerInterval);
+            const accuracy = Math.round((goalsScored / Math.max(1, totalShots)) * 100);
+
+            let stars = 1;
+            if (accuracy >= 90) stars = 3;
+            else if (accuracy >= 75) stars = 2;
+
+            userLevelStars[currentLevel.id] = Math.max(userLevelStars[currentLevel.id] || 0, stars);
+            localStorage.setItem("mathWorldCupStars", JSON.stringify(userLevelStars));
+
+            document.getElementById("victory-level-name").innerText = currentLevel.name;
+            document.getElementById("victory-accuracy").innerText = `${accuracy}%`;
+
+            let starStr = "";
+            for (let i = 0; i < stars; i++) starStr += "⭐️ ";
+            document.getElementById("victory-stars").innerText = starStr;
+
+            const nextBtn = document.getElementById("next-level-btn");
+            if (currentLevel.id < TOURNAMENT_LEVELS.length) {
+                nextBtn.classList.remove("hidden");
+            } else {
+                nextBtn.classList.add("hidden");
+            }
+
+            document.getElementById("victory-modal").classList.remove("hidden");
+        }
+
+        function playNextLevel() {
+            document.getElementById("victory-modal").classList.add("hidden");
+            if (currentLevel.id < TOURNAMENT_LEVELS.length) {
+                startLevel(currentLevel.id + 1);
+            } else {
+                returnToMenu();
+            }
+        }
+
+        // --- HINT & TUTORIAL MODALS ---
+        function showCoachHint() {
+            if (!currentQuestion) return;
+            document.getElementById("hint-text").innerText = currentQuestion.hint;
+            document.getElementById("hint-modal").classList.remove("hidden");
+        }
+        function closeHintModal() {
+            document.getElementById("hint-modal").classList.add("hidden");
+        }
+        function openTutorialModal() {
+            document.getElementById("tutorial-modal").classList.remove("hidden");
+        }
+        function closeTutorialModal() {
+            document.getElementById("tutorial-modal").classList.add("hidden");
+        }
+
+        // --- INITIALIZE ON LOAD ---
+        window.onload = function() {
+            renderLevelHub();
+        };
+    </script>
 </body>
 </html>
