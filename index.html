@@ -6,7 +6,6 @@
   <title>Math World Cup: Practice & Online Penalty Matches</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- PeerJS for online multiplayer -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     .stadium-bg { background: radial-gradient(circle at 50% 30%, #0a1a2f 0%, #0b1f33 40%, #030b14 100%); }
@@ -262,16 +261,17 @@
         </div>
       </div>
 
+      <!-- ONLINE SCORE STRIP — shows my name vs friend's name -->
       <div id="mpScoreStrip" class="hidden w-full bg-slate-900/80 border border-purple-500/40 rounded-2xl p-3 shadow-xl">
         <div class="flex items-center justify-between text-xs gap-2">
           <div class="text-center flex-1 min-w-0">
-            <div class="text-slate-400 mb-0.5">You</div>
+            <div id="mpYouLabel" class="text-slate-400 mb-0.5 truncate">Player</div>
             <div id="mpYouName" class="font-bold text-emerald-300 truncate">Player</div>
             <div id="mpYouGoals" class="text-2xl font-black text-emerald-400">0</div>
           </div>
           <div class="text-amber-400 font-black text-lg px-2">VS</div>
           <div class="text-center flex-1 min-w-0">
-            <div class="text-slate-400 mb-0.5">Friend</div>
+            <div id="mpOppLabel" class="text-slate-400 mb-0.5 truncate">Friend</div>
             <div id="mpOppName" class="font-bold text-rose-300 truncate">Friend</div>
             <div id="mpOppGoals" class="text-2xl font-black text-rose-400">0</div>
           </div>
@@ -293,6 +293,7 @@
           <div class="absolute top-3 left-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
           <div class="absolute top-3 right-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
 
+          <!-- KEEPER — jersey number REMOVED -->
           <div id="keeperWrapper" class="absolute bottom-0 z-30 transition-all duration-300" style="transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(255,215,0,0.3));">
             <svg id="keeperSVG" width="100" height="125" viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg">
               <defs>
@@ -329,7 +330,7 @@
                     fill="url(#keeperJersey)" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
               <path d="M29 54 L29 76 Q29 79 32 79 L38 79 L38 54 Z" fill="url(#keeperJerseyShine)"/>
               <path d="M40 42 Q50 49 60 42" fill="none" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round"/>
-              <text x="50" y="70" font-family="Arial Black, sans-serif" font-size="17" font-weight="900" fill="#f0fdf4" text-anchor="middle" opacity="0.95" style="text-shadow: 0 1px 2px #000;">1</text>
+              <!-- Jersey number removed — no <text> element here -->
               <g stroke-linecap="round" fill="none">
                 <g stroke="#0a0a0a" stroke-width="9">
                   <line x1="27" y1="58" x2="14" y2="42"/><line x1="73" y1="58" x2="86" y2="42"/>
@@ -439,7 +440,6 @@
         <p>3. <strong>Online 1v1</strong> — create a room, share the 4-letter code with a friend. They join from their own device and you both race to 10 goals on identical questions.</p>
         <p>4. Correct answer = top-corner goal. Wrong answer = keeper catches the ball.</p>
         <p>5. You have 20 seconds per question.</p>
-        <p>6. Peer-to-peer: no server needed, works around the world. Some restrictive networks may block the connection — try a different Wi-Fi if the room never connects.</p>
       </div>
       <button onclick="closeTutorial()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl transition">Got It!</button>
     </div>
@@ -514,7 +514,6 @@
     let timerInterval = null;
     const TIMER_CIRCUMFERENCE = 2 * Math.PI * 17;
 
-    // Online 1v1 state (PeerJS)
     const O = {
       active: false,
       roomCode: null,
@@ -522,6 +521,8 @@
       myGoals: 0,
       oppGoals: 0,
       oppName: "Friend",
+      oppNumber: null,
+      oppColor: null,
       seed: null,
       questionIndex: 0,
       finished: false,
@@ -539,9 +540,6 @@
       { id: 7, name: "Level 7: Division Mix", desc: "Division & Subtraction", type: "div_mix" }
     ];
 
-    // ============================================================
-    //  COLOUR HELPERS
-    // ============================================================
     function lighten(hex, amt) {
       const n = parseInt(hex.slice(1), 16);
       let r = (n >> 16) + amt, g = ((n >> 8) & 0xff) + amt, b = (n & 0xff) + amt;
@@ -555,9 +553,6 @@
       return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
 
-    // ============================================================
-    //  PROFILE
-    // ============================================================
     function loadProfileInputs() {
       document.getElementById('myName').value = myProfile.name;
       document.getElementById('myCountryName').value = myProfile.country;
@@ -589,9 +584,6 @@
       setTimeout(() => { btn.textContent = old; }, 1000);
     }
 
-    // ============================================================
-    //  HUB
-    // ============================================================
     function renderLevelHub() {
       const grid = document.getElementById('levelGrid');
       grid.innerHTML = '';
@@ -625,9 +617,6 @@
         `drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px ${c}88)`;
     }
 
-    // ============================================================
-    //  PRACTICE
-    // ============================================================
     function startPractice(lvlId) {
       O.active = false;
       currentLevel = lvlId;
@@ -648,9 +637,6 @@
       nextQuestion();
     }
 
-    // ============================================================
-    //  QA SKIP
-    // ============================================================
     function qaSkipStage() {
       if (O.active) { alert("QA Skip is disabled in online matches."); return; }
       stopTimer();
@@ -662,9 +648,6 @@
       renderLevelHub();
     }
 
-    // ============================================================
-    //  TIMER
-    // ============================================================
     function startTimer() {
       stopTimer();
       timeLeft = QUESTION_TIME;
@@ -706,9 +689,6 @@
       ring.style.strokeDashoffset = 0;
     }
 
-    // ============================================================
-    //  TIMEOUT
-    // ============================================================
     function handleTimeout() {
       if (isProcessingShot) return;
       isProcessingShot = true;
@@ -738,9 +718,6 @@
       }, 1800);
     }
 
-    // ============================================================
-    //  RESET
-    // ============================================================
     function resetActors() {
       const ball = document.getElementById('soccerBall');
       const keeperWrapper = document.getElementById('keeperWrapper');
@@ -754,9 +731,6 @@
       kickerWrapper.style.transform = "";
     }
 
-    // ============================================================
-    //  NEXT QUESTION
-    // ============================================================
     function nextQuestion() {
       isProcessingShot = false;
       resetActors();
@@ -785,9 +759,6 @@
       startTimer();
     }
 
-    // ============================================================
-    //  SEEDED QUESTIONS
-    // ============================================================
     function mulberry32(seed) {
       return function() {
         seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -852,9 +823,6 @@
       return { q, ans, opts };
     }
 
-    // ============================================================
-    //  SUBMIT ANSWER
-    // ============================================================
     function submitAnswer(selectedOpt) {
       if (isProcessingShot) return;
       isProcessingShot = true;
@@ -905,9 +873,6 @@
       }, 1800);
     }
 
-    // ============================================================
-    //  AFTER SHOT
-    // ============================================================
     function afterShot(isCorrect) {
       if (O.active) {
         if (isCorrect) {
@@ -924,7 +889,6 @@
         return;
       }
 
-      // Practice
       if (isCorrect) {
         goalsScored++;
         document.getElementById('goalCounter').innerText = `${goalsScored} / 10`;
@@ -941,9 +905,6 @@
       nextQuestion();
     }
 
-    // ============================================================
-    //  MATCH END
-    // ============================================================
     function endMatch() {
       if (!O.active) return;
       if (O.finished) return;
@@ -1001,7 +962,6 @@
       }
     }
 
-    // Host creates the room
     function createOnlineRoom() {
       cleanupPeer();
       const code = randCode();
@@ -1010,13 +970,12 @@
       O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
       O.seed = Math.floor(Math.random() * 999999) + 1;
       O.finished = false;
+      O.oppName = "Friend";
 
-      // PeerJS peer ID is prefixed so codes don't collide with other PeerJS users
       const peerId = "mwc-" + code;
       O.peer = new Peer(peerId, { debug: 1 });
 
       O.peer.on('open', () => {
-        // Show room UI
         document.getElementById('onlineSetup').classList.add('hidden');
         document.getElementById('onlineRoom').classList.remove('hidden');
         document.getElementById('onlineRoomCode').textContent = code;
@@ -1031,7 +990,6 @@
 
       O.peer.on('error', (err) => {
         console.error("Peer error:", err);
-        // 'unavailable-id' means the random 4-letter code is already taken
         if (err.type === 'unavailable-id') {
           setOnlineStatus("That code is busy. Creating another…", true);
           setTimeout(createOnlineRoom, 500);
@@ -1043,7 +1001,6 @@
       O.peer.on('connection', (conn) => {
         O.conn = conn;
         conn.on('open', () => {
-          // Send my profile immediately
           sendPeer({
             type: 'profile',
             name: myProfile.name,
@@ -1062,7 +1019,6 @@
       });
     }
 
-    // Guest joins
     function joinOnlineRoom() {
       cleanupPeer();
       const code = (document.getElementById('onlineCodeInput').value || "").trim().toUpperCase();
@@ -1072,6 +1028,7 @@
       O.role = "guest";
       O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
       O.finished = false;
+      O.oppName = "Host";
 
       O.peer = new Peer({ debug: 1 });
 
@@ -1080,7 +1037,6 @@
         O.conn = O.peer.connect("mwc-" + code, { reliable: true });
 
         O.conn.on('open', () => {
-          // Send my profile
           sendPeer({
             type: 'profile',
             name: myProfile.name,
@@ -1121,7 +1077,6 @@
         }
 
         if (data.type === 'start') {
-          // Guest receives the start signal
           O.active = true;
           O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
           closeOnlineModal();
@@ -1137,10 +1092,6 @@
         if (data.type === 'questionIndex') {
           O.questionIndex = data.index;
           if (!isProcessingShot) nextQuestion();
-        }
-
-        if (data.type === 'rematch') {
-          // optional
         }
       });
 
@@ -1168,8 +1119,13 @@
       document.getElementById('matchArena').classList.remove('hidden');
       document.getElementById('matchArena').classList.add('flex');
       document.getElementById('mpScoreStrip').classList.remove('hidden');
+
+      // Show my name + friend's name on the score strip
+      document.getElementById('mpYouLabel').textContent = "You";
       document.getElementById('mpYouName').textContent = myProfile.name;
+      document.getElementById('mpOppLabel').textContent = "Friend";
       document.getElementById('mpOppName').textContent = O.oppName;
+
       document.getElementById('mpTurnTag').textContent = "Online match — race to 10!";
       document.getElementById('matchTitle').textContent = "Online 1v1 Match";
       document.getElementById('matchSub').textContent = `${myProfile.name} vs ${O.oppName}`;
@@ -1181,6 +1137,9 @@
     }
 
     function updateOnlineScoreboard() {
+      // Always keep the labels showing real names
+      document.getElementById('mpYouName').textContent = myProfile.name;
+      document.getElementById('mpOppName').textContent = O.oppName;
       document.getElementById('mpYouGoals').textContent = O.myGoals;
       document.getElementById('mpOppGoals').textContent = O.oppGoals;
       document.getElementById('goalCounter').innerText = `You ${O.myGoals} / 10`;
@@ -1192,9 +1151,6 @@
       setOnlineStatus("Code copied!");
     }
 
-    // ============================================================
-    //  MISC UI
-    // ============================================================
     function openTutorial() { document.getElementById('tutorialModal').classList.remove('hidden'); }
     function closeTutorial() { document.getElementById('tutorialModal').classList.add('hidden'); }
     function showHint() { alert(`💡 Coach Hint:\nFor "${currentQuestion.q}", the correct answer is ${currentQuestion.ans}!`); }
