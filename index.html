@@ -1,586 +1,1077 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math World Cup: Addition & Subtraction</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @keyframes kickBall {
-            0% { transform: scale(1) translate(0, 0); opacity: 1; }
-            50% { transform: scale(0.6) translate(var(--kick-x, 0px), -120px); opacity: 0.9; }
-            100% { transform: scale(0.3) translate(var(--kick-target-x, 0px), -220px); opacity: 0; }
-        }
-        .animate-kick {
-            animation: kickBall 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-        @keyframes netBulge {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05) translateY(-5px); }
-            100% { transform: scale(1); }
-        }
-        .animate-net {
-            animation: netBulge 0.4s ease-in-out;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math World Cup: Practice & Penalty Matches</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .stadium-bg { background: radial-gradient(circle at 50% 30%, #0a1a2f 0%, #0b1f33 40%, #030b14 100%); }
+    .pitch-grass {
+      background: linear-gradient(180deg, #1a7a3c 0%, #0f5a2a 40%, #0a3d1e 100%);
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.7), inset 0 0 10px #00000055;
+      position: relative; border-radius: 20px;
+    }
+    .pitch-grass::before {
+      content: ""; position: absolute; inset: 0;
+      background-image:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 40px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 40px);
+      border-radius: 20px; pointer-events: none;
+    }
+    .goal-net-3d {
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25) 0%, transparent 30%),
+        repeating-linear-gradient(45deg, #ffffff30 0px, #ffffff30 1px, transparent 1px, transparent 8px),
+        repeating-linear-gradient(-45deg, #ffffff20 0px, #ffffff20 1px, transparent 1px, transparent 8px),
+        linear-gradient(180deg, #2a3f55 0%, #0f1a24 100%);
+      background-blend-mode: overlay, normal, normal, normal;
+      box-shadow: inset 0 0 50px #000000aa, 0 10px 20px -5px black;
+      border-radius: 8px 8px 0 0;
+      border-left: 3px solid #cfd8e0; border-right: 3px solid #cfd8e0; border-top: 6px solid #e8edf2;
+      position: relative;
+    }
+    .goal-net-mesh {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(to right, #ffffff40 1px, transparent 1px),
+        linear-gradient(to bottom, #ffffff40 1px, transparent 1px);
+      background-size: 12px 12px; opacity: 0.55; mix-blend-mode: overlay;
+      pointer-events: none; border-radius: 6px 6px 0 0;
+    }
+    .goal-frame-3d {
+      border-top: 6px solid #eef2f6; border-left: 8px solid #cfd8e3; border-right: 8px solid #cfd8e3;
+      border-radius: 12px 12px 0 0;
+      box-shadow: 0 -10px 20px -5px #000000aa, inset 0 10px 15px -5px #ffffff33;
+      position: relative;
+    }
+    .ball-3d {
+      width: 28px; height: 28px; font-size: 26px; line-height: 28px; text-align: center;
+      filter: drop-shadow(0 5px 4px rgba(0,0,0,0.7)) drop-shadow(0 0 10px rgba(255,255,220,0.5));
+      transition: transform 0.2s ease-out, filter 0.2s;
+      text-shadow: 0 0 8px white, 0 0 16px rgba(255,255,200,0.6);
+    }
+    .target-corner { filter: drop-shadow(0 0 12px #fbbf24); transition: all 0.2s; }
+    .penalty-spot-glow { box-shadow: 0 0 40px 10px rgba(255,255,180,0.4), 0 0 80px 20px rgba(255,255,200,0.1); border-radius: 50%; }
+
+    .timer-ring { transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+    @keyframes timerPulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.12);} }
+    .timer-danger { animation: timerPulse 0.6s ease-in-out infinite; }
+
+    @keyframes netBulgeReal {
+      0% { transform: scale(1); filter: brightness(1); }
+      40% { transform: scale(1.08) translateY(-8px); filter: brightness(1.4); }
+      70% { transform: scale(1.02) translateY(-2px); filter: brightness(1.2); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+    .animate-net-bulge { animation: netBulgeReal 0.6s cubic-bezier(0.2, 0.9, 0.4, 1); }
+
+    @keyframes kickTopLeftReal {
+      0% { transform: scale(1) translate(0, 0); opacity: 1; }
+      30% { transform: scale(0.85) translate(-60px, -80px); opacity: 1; }
+      70% { transform: scale(0.55) translate(-190px, -200px); opacity: 1; }
+      100% { transform: scale(0.3) translate(-280px, -260px); opacity: 0.9; }
+    }
+    @keyframes kickTopRightReal {
+      0% { transform: scale(1) translate(0, 0); opacity: 1; }
+      30% { transform: scale(0.85) translate(60px, -80px); opacity: 1; }
+      70% { transform: scale(0.55) translate(190px, -200px); opacity: 1; }
+      100% { transform: scale(0.3) translate(280px, -260px); opacity: 0.9; }
+    }
+    .animate-kick-top-left-real { animation: kickTopLeftReal 0.65s cubic-bezier(0.2, 0.8, 0.4, 1) forwards; }
+    .animate-kick-top-right-real { animation: kickTopRightReal 0.65s cubic-bezier(0.2, 0.8, 0.4, 1) forwards; }
+
+    @keyframes ballCaughtLeft {
+      0%   { transform: scale(1) translate(0, 0); opacity: 1; }
+      55%  { transform: scale(0.8) translate(-110px, -130px); opacity: 1; }
+      100% { transform: scale(0.55) translate(-158px, -168px) rotate(-12deg); opacity: 1; }
+    }
+    @keyframes ballCaughtRight {
+      0%   { transform: scale(1) translate(0, 0); opacity: 1; }
+      55%  { transform: scale(0.8) translate(110px, -130px); opacity: 1; }
+      100% { transform: scale(0.55) translate(158px, -168px) rotate(12deg); opacity: 1; }
+    }
+    .animate-ball-caught-left  { animation: ballCaughtLeft 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
+    .animate-ball-caught-right { animation: ballCaughtRight 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
+
+    @keyframes diveLeftReal {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      25% { transform: translate(-50px, -20px) rotate(-20deg) scale(1.05); }
+      60% { transform: translate(-150px, 20px) rotate(-55deg) scale(1.1); }
+      100% { transform: translate(-185px, 30px) rotate(-75deg) scale(1.05); }
+    }
+    @keyframes diveRightReal {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      25% { transform: translate(50px, -20px) rotate(20deg) scale(1.05); }
+      60% { transform: translate(150px, 20px) rotate(55deg) scale(1.1); }
+      100% { transform: translate(185px, 30px) rotate(75deg) scale(1.05); }
+    }
+    .animate-dive-left  { animation: diveLeftReal 0.5s ease-out forwards; }
+    .animate-dive-right { animation: diveRightReal 0.5s ease-out forwards; }
+
+    @keyframes catchPoseLeft {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      100% { transform: translate(-150px, 25px) rotate(-70deg) scale(1.05); }
+    }
+    @keyframes catchPoseRight {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      100% { transform: translate(150px, 25px) rotate(70deg) scale(1.05); }
+    }
+    .animate-catch-left  { animation: catchPoseLeft 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
+    .animate-catch-right { animation: catchPoseRight 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
+
+    @keyframes kickerRunUp {
+      0% { transform: translate(0, 0) scale(1); }
+      40% { transform: translate(-6px, -4px) scale(1.03); }
+      70% { transform: translate(4px, -6px) scale(1.04); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes kickerSwing {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      30% { transform: translate(2px, -2px) rotate(8deg) scale(1.02); }
+      60% { transform: translate(-2px, 2px) rotate(-14deg) scale(1.03); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+    @keyframes kickerFollowThrough {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      100% { transform: translate(4px, -2px) rotate(16deg) scale(1.05); }
+    }
+    .animate-kicker-runup { animation: kickerRunUp 0.35s ease-in-out; }
+    .animate-kicker-swing { animation: kickerSwing 0.4s ease-in-out; }
+    .animate-kicker-follow { animation: kickerFollowThrough 0.5s ease-out forwards; }
+
+    @media (max-width: 640px) {
+      .goal-container { width: 100% !important; height: 150px !important; }
+      .ball-3d { width: 22px; height: 22px; font-size: 20px; line-height: 22px; }
+      #keeperWrapper { transform-origin: center bottom; }
+      #kickerWrapper { transform-origin: center bottom; }
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between selection:bg-yellow-400 selection:text-slate-900">
-    <!-- STADIUM BACKGROUND LIGHTING EFFECTS -->
-    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div class="absolute -top-32 -left-32 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute top-1/4 -right-32 w-96 h-96 bg-yellow-500/15 rounded-full blur-3xl animate-pulse" style="animation-delay: 1.5s;"></div>
-        <div class="absolute bottom-0 left-1/3 w-full h-80 bg-emerald-600/10 rounded-full blur-3xl"></div>
-    </div>
+<body class="stadium-bg min-h-screen text-white font-sans flex flex-col justify-between select-none">
 
-    <!-- MAIN APP CONTAINER -->
-    <div class="relative z-10 max-w-5xl mx-auto px-4 py-4 w-full flex-1 flex flex-col justify-between">
-        <!-- HEADER -->
-        <header class="flex items-center justify-between py-4 border-b border-slate-800/80 mb-6 bg-slate-900/60 backdrop-blur-md px-6 rounded-2xl border border-white/5 shadow-2xl">
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-gradient-to-tr from-yellow-500 to-amber-300 rounded-xl shadow-lg shadow-yellow-500/20">
-                    <span class="text-3xl block transform hover:rotate-12 transition">⚽</span>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-500 uppercase">Math World Cup</h1>
-                    <p class="text-xs text-emerald-400 font-bold tracking-widest uppercase flex items-center gap-1">
-                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Addition & Subtraction Tournament
-                    </p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="openTutorialModal()" class="px-4 py-2 bg-slate-800/80 hover:bg-slate-700 border border-yellow-400/40 hover:border-yellow-400 text-yellow-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg backdrop-blur">
-                    <span class="text-base">❓</span> How to Play
-                </button>
-            </div>
-        </header>
-
-        <!-- MAIN MENU / LEVEL SELECTION HUB -->
-        <div id="main-menu" class="space-y-6">
-            <!-- QUICK START GUIDE BOX & PLAY BUTTON -->
-            <div class="bg-gradient-to-br from-emerald-950/80 via-slate-900/90 to-slate-950 border-2 border-emerald-500/40 rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="space-y-3 max-w-xl">
-                    <h2 class="text-2xl font-black text-yellow-400 flex items-center gap-2">
-                        <span class="text-3xl">🏆</span> Math World Cup Tournament
-                    </h2>
-                    <p class="text-sm text-slate-300">
-                        Solve addition and subtraction math problems to take kicks, score 10 goals per stage, and win the World Cup Trophy!
-                    </p>
-                    <div class="grid grid-cols-3 gap-2 pt-2 text-xs">
-                        <div class="bg-slate-900/70 p-2.5 rounded-xl border border-slate-800">
-                            <span class="text-yellow-400 font-black block mb-0.5">1. Select Level</span>
-                            Unlock 10 stages
-                        </div>
-                        <div class="bg-slate-900/70 p-2.5 rounded-xl border border-slate-800">
-                            <span class="text-emerald-400 font-black block mb-0.5">2. Score 10 Goals</span>
-                            Solve math to kick ⚽
-                        </div>
-                        <div class="bg-slate-900/70 p-2.5 rounded-xl border border-slate-800">
-                            <span class="text-amber-400 font-black block mb-0.5">3. Earn Stars</span>
-                            High accuracy = ⭐️⭐️⭐️
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BIG PLAY BUTTON -->
-                <button onclick="startLevel(1)" class="w-full md:w-auto px-10 py-5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-slate-950 font-black text-2xl rounded-2xl shadow-xl shadow-emerald-500/30 transform hover:scale-105 active:scale-95 transition border-2 border-emerald-300 flex items-center justify-center gap-3 tracking-wider uppercase">
-                    <span>⚽ PLAY NOW</span>
-                    <span class="text-xl">➔</span>
-                </button>
-            </div>
-
-            <!-- LEVEL SELECT HEADER -->
-            <div class="flex items-center justify-between pt-2">
-                <h3 class="text-xl font-black text-slate-200 flex items-center gap-2">
-                    <span>🏆</span> Select Tournament Stage
-                </h3>
-            </div>
-
-            <!-- LEVEL HUB GRID -->
-            <div id="level-hub-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Dynamic level cards populated by JavaScript -->
-            </div>
+  <!-- TOP BAR -->
+  <header class="bg-slate-900/80 backdrop-blur border-b border-slate-700/50 p-4 sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <span class="text-3xl">🏆</span>
+        <div>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">MATH WORLD CUP</h1>
+          <p class="text-xs text-slate-400">Practice &amp; Penalty Matches</p>
         </div>
-
-        <!-- MATCH STADIUM SCREEN -->
-        <div id="match-screen" class="hidden space-y-4">
-            <!-- TOP MATCH SCOREBOARD -->
-            <div class="bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-2xl backdrop-blur-md">
-                <button onclick="returnToMenu()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-bold transition">
-                    ← Stages
-                </button>
-
-                <div class="flex items-center gap-6">
-                    <div class="text-center">
-                        <span class="text-xs uppercase font-bold text-slate-400 block">Stage</span>
-                        <span id="current-stage-title" class="text-sm font-black text-yellow-400">Level 1</span>
-                    </div>
-
-                    <div class="bg-slate-950 px-6 py-2 rounded-xl border border-slate-800 flex items-center gap-4">
-                        <div class="text-center">
-                            <span class="text-2xl font-black text-emerald-400" id="match-goals">0</span>
-                            <span class="text-[10px] text-slate-400 uppercase font-bold block">Goals</span>
-                        </div>
-                        <span class="text-slate-600 text-xl font-bold">/</span>
-                        <div class="text-center">
-                            <span class="text-sm font-bold text-slate-400" id="match-target-goals">10</span>
-                            <span class="text-[10px] text-slate-500 uppercase font-bold block">Target</span>
-                        </div>
-                    </div>
-
-                    <div class="text-center">
-                        <span class="text-xs uppercase font-bold text-slate-400 block">Shots</span>
-                        <span id="match-shots" class="text-sm font-black text-white">0</span>
-                    </div>
-                </div>
-
-                <div id="timer-box" class="hidden text-center bg-red-950/60 border border-red-500/40 px-3 py-1 rounded-xl">
-                    <span class="text-[10px] uppercase font-bold text-red-400 block">Shot Clock</span>
-                    <span id="timer-count" class="text-lg font-black text-red-300">15s</span>
-                </div>
-            </div>
-
-            <!-- SOCCER PITCH STADIUM CANVAS AREA -->
-            <div id="stadium-pitch" class="relative h-64 sm:h-72 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-950 rounded-3xl border-4 border-slate-800 overflow-hidden shadow-2xl flex flex-col justify-between p-4">
-                <!-- GOAL NET -->
-                <div id="goal-container" class="relative mx-auto w-64 sm:w-80 h-28 border-4 border-white bg-slate-950/40 rounded-t-xl overflow-hidden flex items-center justify-center border-b-0 shadow-inner">
-                    <div class="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:12px_12px] opacity-20"></div>
-                    <!-- GOALKEEPER -->
-                    <div id="goalkeeper" class="text-4xl transition-all duration-300 transform translate-y-2 z-10">🧤</div>
-                </div>
-
-                <!-- COMMENTARY DISPLAY -->
-                <div id="commentary-banner" class="text-center font-bold text-sm sm:text-base text-yellow-300 min-h-[24px]">
-                    Ready to take the shot!
-                </div>
-
-                <!-- SOCCER BALL -->
-                <div class="relative flex justify-center pb-2">
-                    <div id="soccer-ball" class="text-5xl transition-transform duration-300 z-20 drop-shadow-2xl cursor-default">⚽</div>
-                </div>
-            </div>
-
-            <!-- MATH QUESTION & CONTROLS BOX -->
-            <div class="bg-slate-900/90 border-2 border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-md space-y-6">
-                <!-- QUESTION DISPLAY -->
-                <div class="flex items-center justify-between bg-slate-950/80 p-6 rounded-2xl border border-slate-800">
-                    <div class="flex items-center gap-4">
-                        <span id="equation-display" class="text-3xl sm:text-4xl font-black text-white tracking-wider">
-                            12 + 5 = ?
-                        </span>
-                    </div>
-
-                    <button onclick="showCoachHint()" class="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/50 text-yellow-300 rounded-xl text-xs font-bold transition flex items-center gap-2">
-                        💡 Coach Hint
-                    </button>
-                </div>
-
-                <!-- MULTIPLE CHOICE OPTIONS GRID -->
-                <div id="options-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <!-- Dynamic option buttons -->
-                </div>
-            </div>
-        </div>
+      </div>
+      <button onclick="openTutorial()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition">
+        <i class="fas fa-question-circle text-amber-400"></i> How to Play
+      </button>
     </div>
+  </header>
 
-    <!-- COACH HINT MODAL -->
-    <div id="hint-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-900 border-2 border-yellow-500/40 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 class="text-xl font-black text-yellow-400 flex items-center gap-2">
-                <span>💡</span> Coach's Math Hint
-            </h3>
-            <p id="hint-text" class="text-slate-300 text-sm leading-relaxed bg-slate-950 p-4 rounded-xl border border-slate-800">
-                Hint explanation goes here...
-            </p>
-            <button onclick="closeHintModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm transition">
-                Got It!
-            </button>
-        </div>
-    </div>
+  <!-- MAIN -->
+  <main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
 
-    <!-- HOW TO PLAY TUTORIAL MODAL -->
-    <div id="tutorial-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-900 border-2 border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-xl font-black text-yellow-400 flex items-center gap-2">
-                    <span>⚽</span> How to Play Math World Cup
-                </h3>
-                <button onclick="closeTutorialModal()" class="text-slate-400 hover:text-white font-bold text-xl">✕</button>
-            </div>
-            <div class="space-y-3 text-slate-300 text-sm">
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-                    <span class="font-bold text-emerald-400 block mb-1">3. Score 10 Goals to Win</span>
-                    Every correct answer scores ⚽ 1 Goal! Score 10 goals to complete the stage.
-                </div>
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-                    <span class="font-bold text-emerald-400 block mb-1">2. Answer Math Questions</span>
-                    Read the addition or subtraction equation shown on screen and select the correct answer.
-                </div>
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-                    <span class="font-bold text-emerald-400 block mb-1">3. Score 50 Goals to Win</span>
-                    Every correct answer scores ⚽ 1 Goal! Score 50 goals to complete the stage.
-                </div>
-                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
-                    <span class="font-bold text-emerald-400 block mb-1">4. Solve Missing Terms</span>
-                    In higher rounds like `15 + ? = 32`, subtract 15 from 32 to find the missing number (`32 - 15 = 17`).
-                </div>
-            </div>
-            <button onclick="closeTutorialModal()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 font-black rounded-xl text-sm transition">
-                Let's Play!
-            </button>
-        </div>
-    </div>
+    <!-- HUB -->
+    <div id="levelHub" class="space-y-6">
 
-    <!-- WIN VICTORY MODAL -->
-    <div id="victory-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-yellow-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl space-y-6">
-            <div class="text-6xl animate-bounce">🏆</div>
+      <!-- MODE CARDS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- PRACTICE -->
+        <div class="bg-slate-800/90 border border-emerald-500/40 rounded-2xl p-6 shadow-2xl backdrop-blur">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-3xl">🎯</span>
             <div>
-                <h3 class="text-3xl font-black text-yellow-400">STAGE CLEARED!</h3>
-                <p id="victory-level-name" class="text-slate-400 font-bold text-sm mt-1">Level 1</p>
+              <h2 class="text-lg font-bold text-emerald-300">Practice</h2>
+              <p class="text-xs text-slate-400">Solo penalty drills vs the keeper</p>
             </div>
-            <div id="victory-stars" class="text-4xl tracking-widest">
-                ⭐️ ⭐️ ⭐️
-            </div>
-            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-slate-300 text-sm space-y-1">
-                <p>Total Goals: <span class="font-black text-emerald-400">10</span></p>
-                <p>Accuracy: <span id="victory-accuracy" class="font-black text-yellow-400">100%</span></p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="returnToMenu()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition">
-                    Stages Hub
-                </button>
-                <button id="next-level-btn" onclick="playNextLevel()" class="flex-1 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-950 font-black rounded-xl transition">
-                    Next Stage ➔
-                </button>
-            </div>
+          </div>
+          <p class="text-sm text-slate-300 mb-4">Pick any level to practise a math topic and score 10 goals.</p>
+          <button onclick="startPractice(1)" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-lg py-3 px-6 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
+            <i class="fas fa-futbol"></i> START PRACTICE
+          </button>
         </div>
+
+        <!-- PENALTY MATCH -->
+        <div class="bg-slate-800/90 border border-sky-500/40 rounded-2xl p-6 shadow-2xl backdrop-blur">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-3xl">⚔️</span>
+            <div>
+              <h2 class="text-lg font-bold text-sky-300">Penalty Match</h2>
+              <p class="text-xs text-slate-400">1v1 vs your friend — same questions</p>
+            </div>
+          </div>
+          <p class="text-sm text-slate-300 mb-4">Set your friend's kit, then race to 10 goals on identical questions. First to 10 wins.</p>
+          <button onclick="openFriendProfileAndStart()" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-lg py-3 px-6 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
+            <i class="fas fa-users"></i> PLAY VS FRIEND
+          </button>
+        </div>
+      </div>
+
+      <!-- MY PROFILE -->
+      <div class="bg-slate-900/70 border border-amber-500/30 rounded-xl p-4 text-left">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2"><i class="fas fa-user"></i> My Player Profile</h3>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-200" id="profilePreviewName">Player</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-black" id="profilePreviewNumber">10</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400 w-20">Name</label>
+            <input id="myName" type="text" maxlength="20" placeholder="Your name"
+                   class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="Player">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400 w-20">Country</label>
+            <input id="myCountryName" type="text" maxlength="20" placeholder="Country"
+                   class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="My Country">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400 w-20">Jersey</label>
+            <input id="myCountryColor" type="color" value="#22c55e" class="w-14 h-9 rounded border border-slate-600 bg-slate-800 cursor-pointer">
+            <input id="myJerseyNumber" type="number" min="1" max="99" placeholder="10"
+                   class="w-20 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="10">
+            <button onclick="saveMyProfile()" class="ml-auto bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FRIEND PROFILE -->
+      <div class="bg-slate-900/70 border border-sky-500/30 rounded-xl p-4 text-left">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-sky-300 flex items-center gap-2"><i class="fas fa-user-friends"></i> Friend Profile</h3>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-200" id="friendPreviewName">Friend</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-black" id="friendPreviewNumber">9</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400 w-20">Name</label>
+            <input id="friendName" type="text" maxlength="20" placeholder="Friend's name"
+                   class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" value="Friend">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400 w-20">Country</label>
+            <input id="friendCountryName" type="text" maxlength="20" placeholder="Friend's country"
+                   class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" value="Rivals">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-400 w-20">Jersey</label>
+            <input id="friendCountryColor" type="color" value="#ef4444" class="w-14 h-9 rounded border border-slate-600 bg-slate-800 cursor-pointer">
+            <input id="friendJerseyNumber" type="number" min="1" max="99" placeholder="9"
+                   class="w-20 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" value="9">
+            <button onclick="saveFriendProfile()" class="ml-auto bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRACTICE LEVELS -->
+      <div>
+        <h3 class="text-sm font-bold text-emerald-300 mb-2 flex items-center gap-2"><i class="fas fa-list"></i> Practice Levels</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="levelGrid"></div>
+      </div>
     </div>
 
-    <script>
-        // --- TOURNAMENT LEVELS CONFIGURATION (10 LEVELS) ---
-        const TOURNAMENT_LEVELS = [
-            { id: 1, name: "Level 1: Group Stage (Warm-up)", min: 1, max: 10, ops: ["+"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Single digit addition (1-10)" },
-            { id: 2, name: "Level 2: Group Stage (Subtraction)", min: 1, max: 12, ops: ["-"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Basic subtraction (1-12)" },
-            { id: 3, name: "Level 3: Round of 32", min: 5, max: 20, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Mixed Addition & Subtraction (1-20)" },
-            { id: 4, name: "Level 4: Round of 16", min: 10, max: 30, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Double Digits without carrying (10-30)" },
-            { id: 5, name: "Level 5: Pre-Quarter Finals", min: 10, max: 50, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: false, desc: "Double Digits with carrying/borrowing (10-50)" },
-            { id: 6, name: "Level 6: Quarter-Finals", min: 10, max: 50, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: true, desc: "Missing Number Equations (e.g. 14 + ? = 35)" },
-            { id: 7, name: "Level 7: Semi-Finals", min: 20, max: 80, ops: ["+", "-"], targetGoals: 10, timer: 0, missingTerm: true, desc: "Advanced Missing Numbers (20-80)" },
-            { id: 8, name: "Level 8: Bronze Medal Match", min: 20, max: 100, ops: ["+", "-"], targetGoals: 10, timer: 15, missingTerm: false, desc: "15s Shot Clock Challenge (20-100)" },
-            { id: 9, name: "Level 9: Grand Championship", min: 50, max: 150, ops: ["+", "-"], targetGoals: 10, timer: 12, missingTerm: true, desc: "12s Shot Clock Missing Term Sprint" },
-            { id: 10, name: "Level 10: World Cup Penalty Final", min: 50, max: 200, ops: ["+", "-"], targetGoals: 10, timer: 8, missingTerm: true, desc: "Ultimate 8s Penalty Shootout (50-200)" }
-        ];
+    <!-- MATCH ARENA -->
+    <div id="matchArena" class="hidden flex-col items-center justify-center space-y-4">
 
-        const GOAL_COMMENTARIES = [
-            "GOOOOOAL! Absolute rocket into the top corner!",
-            "WHAT A STRIKE! The keeper had no chance!",
-            "GOAL! Pure mathematical precision!",
-            "IN THE NET! Incredible goal!"
-        ];
+      <div class="w-full bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 shadow-xl flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl" id="stageFlag">⚽</span>
+          <div>
+            <div class="text-xs text-amber-400 uppercase tracking-wider font-semibold" id="matchTitle">Practice</div>
+            <div class="text-sm font-bold text-slate-200" id="matchSub">Player — Adding Normal Numbers</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <button onclick="qaSkipStage()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2 rounded-xl shadow border border-indigo-400/50 flex items-center gap-1.5 transition">
+            <i class="fas fa-forward"></i> ⚡ QA Skip
+          </button>
+          <div class="text-center">
+            <div class="text-xs text-slate-400" id="goalLabel">GOALS</div>
+            <div class="text-2xl font-black text-emerald-400" id="goalCounter">0 / 10</div>
+          </div>
+        </div>
+      </div>
 
-        const MISS_COMMENTARIES = [
-            "SAVED! The goalkeeper blocks the shot!",
-            "MISSED! High over the crossbar!",
-            "DENIED! Great save by the keeper!"
-        ];
+      <!-- MATCH SCORE STRIP -->
+      <div id="mpScoreStrip" class="hidden w-full bg-slate-900/80 border border-sky-500/40 rounded-2xl p-3 shadow-xl">
+        <div class="flex items-center justify-between text-xs gap-2">
+          <div class="text-center flex-1 min-w-0">
+            <div class="text-slate-400 mb-0.5">You</div>
+            <div id="mpYouName" class="font-bold text-emerald-300 truncate">Player</div>
+            <div id="mpYouGoals" class="text-2xl font-black text-emerald-400">0</div>
+          </div>
+          <div class="text-amber-400 font-black text-lg px-2">VS</div>
+          <div class="text-center flex-1 min-w-0">
+            <div class="text-slate-400 mb-0.5">Friend</div>
+            <div id="mpOppName" class="font-bold text-rose-300 truncate">Friend</div>
+            <div id="mpOppGoals" class="text-2xl font-black text-rose-400">0</div>
+          </div>
+        </div>
+        <div id="mpTurnTag" class="text-[11px] text-center text-amber-300 mt-1 font-bold">Your turn</div>
+      </div>
 
-        // --- GAME STATE ---
-        let currentLevel = null;
-        let currentQuestion = null;
-        let goalsScored = 0;
-        let totalShots = 0;
-        let isProcessingShot = false;
-        let timerInterval = null;
-        let timeLeft = 0;
-        let userLevelStars = JSON.parse(localStorage.getItem("mathWorldCupStars") || "{}");
+      <!-- PITCH -->
+      <div class="relative w-full h-96 pitch-grass rounded-3xl border-4 border-slate-600/60 overflow-hidden shadow-2xl flex flex-col justify-between items-center p-4">
 
-        // --- SOUND EFFECTS (Web Audio API) ---
-        function playWhistleSound() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = "sine";
-                osc.frequency.setValueAtTime(2800, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(3200, ctx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.25);
-            } catch (e) {}
+        <div id="commentaryBanner" class="z-20 bg-slate-900/90 border border-slate-700 px-6 py-1.5 rounded-full text-xs font-bold text-amber-300 transition-all duration-300 opacity-0 transform -translate-y-2 backdrop-blur-sm">
+          Aim for the top corner!
+        </div>
+
+        <div id="goalFrame" class="goal-frame-3d relative w-80 h-40 bg-slate-800/30 shadow-2xl flex justify-center items-end z-10 overflow-visible">
+          <div id="goalNet" class="goal-net-3d absolute inset-0 rounded-t-lg overflow-hidden">
+            <div class="goal-net-mesh"></div>
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 rounded-t-lg"></div>
+          </div>
+          <div class="absolute top-3 left-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
+          <div class="absolute top-3 right-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
+
+          <!-- KEEPER -->
+          <div id="keeperWrapper" class="absolute bottom-0 z-30 transition-all duration-300" style="transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+            <svg id="keeperSVG" width="100" height="125" viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="stickGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#fde68a" stop-opacity="0.6"/><stop offset="100%" stop-color="#fde68a" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="keeperJersey" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#22c55e"/><stop offset="55%" stop-color="#16a34a"/><stop offset="100%" stop-color="#0f5a2a"/>
+                </linearGradient>
+                <linearGradient id="keeperJerseyShine" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="keeperShorts" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/>
+                </linearGradient>
+              </defs>
+              <ellipse cx="50" cy="65" rx="42" ry="55" fill="url(#stickGlow)"/>
+              <ellipse cx="50" cy="122" rx="24" ry="4" fill="#000" opacity="0.35"/>
+              <g stroke-linecap="round" fill="none">
+                <g stroke="#0a0a0a" stroke-width="9">
+                  <line x1="50" y1="88" x2="38" y2="118"/><line x1="50" y1="88" x2="62" y2="118"/>
+                </g>
+                <g stroke="#f8fafc" stroke-width="5">
+                  <line x1="50" y1="88" x2="38" y2="118"/><line x1="50" y1="88" x2="62" y2="118"/>
+                </g>
+              </g>
+              <path d="M34 116 L42 116 L40 122 L32 122 Z" fill="#111827"/>
+              <path d="M58 116 L66 116 L68 122 L60 122 Z" fill="#111827"/>
+              <rect x="32" y="120" width="10" height="2" rx="1" fill="#f59e0b"/>
+              <rect x="58" y="120" width="10" height="2" rx="1" fill="#f59e0b"/>
+              <path d="M33 76 L67 76 L69 90 Q69 93 66 93 L58 93 L56 84 L44 84 L42 93 L34 93 Q31 93 31 90 Z" fill="url(#keeperShorts)" stroke="#0a0a0a" stroke-width="1.5"/>
+              <line x1="50" y1="78" x2="50" y2="87" stroke="#334155" stroke-width="1.5"/>
+              <path d="M28 52 Q28 44 36 42 L64 42 Q72 44 72 52 L73 78 Q73 82 69 82 L31 82 Q27 82 27 78 Z"
+                    fill="url(#keeperJersey)" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M29 54 L29 76 Q29 79 32 79 L38 79 L38 54 Z" fill="url(#keeperJerseyShine)"/>
+              <path d="M40 42 Q50 49 60 42" fill="none" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round"/>
+              <text x="50" y="70" font-family="Arial Black, sans-serif" font-size="17" font-weight="900" fill="#f0fdf4" text-anchor="middle" opacity="0.95" style="text-shadow: 0 1px 2px #000;">1</text>
+              <g stroke-linecap="round" fill="none">
+                <g stroke="#0a0a0a" stroke-width="9">
+                  <line x1="27" y1="58" x2="14" y2="42"/><line x1="73" y1="58" x2="86" y2="42"/>
+                </g>
+                <g stroke="#f8fafc" stroke-width="5">
+                  <line x1="27" y1="58" x2="14" y2="42"/><line x1="73" y1="58" x2="86" y2="42"/>
+                </g>
+              </g>
+              <circle cx="13" cy="38" r="8" fill="#facc15" stroke="#92400e" stroke-width="2"/>
+              <circle cx="87" cy="38" r="8" fill="#facc15" stroke="#92400e" stroke-width="2"/>
+              <circle cx="11" cy="36" r="2.8" fill="#fef9c3" opacity="0.9"/>
+              <circle cx="85" cy="36" r="2.8" fill="#fef9c3" opacity="0.9"/>
+              <g stroke-linecap="round">
+                <circle cx="50" cy="28" r="14" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="7"/>
+                <circle cx="50" cy="28" r="14" fill="#f8fafc" stroke="#e0f2fe" stroke-width="2"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- KICKER + BALL -->
+        <div class="relative flex items-end justify-center h-32 w-full">
+          <div id="kickerWrapper" class="absolute z-40 transition-all duration-300" style="left: calc(50% - 92px); bottom: -4px; transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(56,189,248,0.4));">
+            <svg id="kickerSVG" width="80" height="110" viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="jerseyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" id="jerseyTop" stop-color="#38bdf8"/>
+                  <stop offset="55%" id="jerseyMid" stop-color="#0ea5e9"/>
+                  <stop offset="100%" id="jerseyBot" stop-color="#0369a1"/>
+                </linearGradient>
+                <linearGradient id="jerseyShine" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="shortsGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/>
+                </linearGradient>
+              </defs>
+              <ellipse cx="40" cy="106" rx="22" ry="3.5" fill="#000" opacity="0.4"/>
+              <g stroke-linecap="round" fill="none">
+                <g stroke="#0a0a0a" stroke-width="8">
+                  <line x1="40" y1="78" x2="30" y2="102"/><line x1="40" y1="78" x2="50" y2="102"/>
+                </g>
+                <g stroke="#e0f2fe" stroke-width="4.5">
+                  <line x1="40" y1="78" x2="30" y2="102"/><line x1="40" y1="78" x2="50" y2="102"/>
+                </g>
+              </g>
+              <path d="M26 100 L34 100 L32 106 L24 106 Z" fill="#111827"/>
+              <path d="M46 100 L54 100 L56 106 L48 106 Z" fill="#111827"/>
+              <rect x="24" y="104" width="10" height="2.5" rx="1" fill="#f59e0b"/>
+              <rect x="46" y="104" width="10" height="2.5" rx="1" fill="#f59e0b"/>
+              <path d="M26 68 L54 68 L56 82 Q56 85 53 85 L46 85 L44 76 L36 76 L34 85 L27 85 Q24 85 24 82 Z" fill="url(#shortsGrad)" stroke="#0a0a0a" stroke-width="1.5"/>
+              <line x1="40" y1="70" x2="40" y2="79" stroke="#334155" stroke-width="1.5"/>
+              <path d="M25 44 Q25 38 31 36 L49 36 Q55 38 55 44 L56 68 Q56 72 52 72 L28 72 Q24 72 24 68 Z"
+                    fill="url(#jerseyGrad)" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M26 46 L26 66 Q26 69 29 69 L34 69 L34 46 Z" fill="url(#jerseyShine)"/>
+              <path d="M33 36 Q40 42 47 36" fill="none" stroke="#f0f9ff" stroke-width="2.5" stroke-linecap="round"/>
+              <text id="jerseyNumber" x="40" y="60" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#f0f9ff" text-anchor="middle" opacity="0.95" style="text-shadow: 0 1px 2px #000;">10</text>
+              <g stroke-linecap="round" fill="none">
+                <g stroke="#0a0a0a" stroke-width="8">
+                  <line x1="24" y1="50" x2="12" y2="62"/><line x1="56" y1="50" x2="68" y2="62"/>
+                </g>
+                <g stroke="#e0f2fe" stroke-width="4.5">
+                  <line x1="24" y1="50" x2="12" y2="62"/><line x1="56" y1="50" x2="68" y2="62"/>
+                </g>
+              </g>
+              <circle cx="11" cy="63" r="3.5" fill="#e0f2fe" stroke="#0a0a0a" stroke-width="1.5"/>
+              <circle cx="69" cy="63" r="3.5" fill="#e0f2fe" stroke="#0a0a0a" stroke-width="1.5"/>
+              <g stroke-linecap="round">
+                <circle cx="40" cy="20" r="12" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="6"/>
+                <circle cx="40" cy="20" r="12" fill="#e0f2fe" stroke="#f8fafc" stroke-width="2"/>
+              </g>
+            </svg>
+          </div>
+          <div class="absolute w-16 h-16 rounded-full bg-white/5 blur-2xl penalty-spot-glow" style="bottom: 8px;"></div>
+          <div id="soccerBall" class="ball-3d relative z-20" style="margin-bottom: 4px;">⚽</div>
+        </div>
+
+        <div class="absolute inset-0 pointer-events-none opacity-10 bg-[repeating-linear-gradient(45deg,#fff_0px,#fff_1px,transparent_1px,transparent_6px)]"></div>
+      </div>
+
+      <!-- QUESTION CARD -->
+      <div class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-5 text-center shadow-xl backdrop-blur relative">
+        <button onclick="showHint()" class="absolute top-4 right-4 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">💡 Coach Hint</button>
+        <div class="absolute top-3 left-4 flex items-center gap-2">
+          <svg width="42" height="42" viewBox="0 0 42 42" class="transform -rotate-90">
+            <circle cx="21" cy="21" r="17" fill="none" stroke="#1e293b" stroke-width="5"/>
+            <circle id="timerRing" cx="21" cy="21" r="17" fill="none" stroke="#22c55e" stroke-width="5"
+                    stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="0" class="timer-ring"/>
+          </svg>
+          <div id="timerText" class="text-lg font-black text-emerald-400 tabular-nums">20</div>
+        </div>
+        <div class="text-xs text-slate-400 uppercase tracking-widest mb-1" id="qTurnLabel">Solve to Shoot</div>
+        <div class="text-3xl font-black text-white tracking-wide mb-5" id="questionText">12 + 15 = ?</div>
+        <div class="grid grid-cols-2 gap-3" id="optionsContainer"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- TUTORIAL -->
+  <div id="tutorialModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 class="text-xl font-bold text-amber-400">📖 How to Play</h3>
+        <button onclick="closeTutorial()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+      <div class="text-sm text-slate-300 space-y-3">
+        <p>1. Set <strong>My Player Profile</strong> (name, country, jersey colour, jersey number) and your <strong>Friend Profile</strong> (name, country, jersey colour, jersey number).</p>
+        <p>2. <strong>Practice</strong> — solo penalty drills vs the keeper. Score 10 goals to finish a level.</p>
+        <p>3. <strong>Penalty Match</strong> — you vs your friend on the same device. You both take turns answering the same questions and racing to 10 goals. First to 10 wins.</p>
+        <p>4. Correct answer = top-corner goal. Wrong answer = keeper catches the ball.</p>
+        <p>5. You have 20 seconds per question — the keeper catches it if time runs out.</p>
+      </div>
+      <button onclick="closeTutorial()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl transition">Got It!</button>
+    </div>
+  </div>
+
+  <!-- GAME OVER MODAL -->
+  <div id="gameOverModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-amber-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
+      <h3 id="goTitle" class="text-2xl font-black text-amber-300">Full Time!</h3>
+      <div id="goScore" class="text-4xl font-black text-white">10 – 7</div>
+      <p id="goSub" class="text-sm text-slate-300">Great match!</p>
+      <button onclick="backToHubFromGame()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl transition">Back to Hub</button>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    //  STATE
+    // ============================================================
+    let goalsScored = 0;
+    let totalShots = 0;
+    let isProcessingShot = false;
+    let currentLevel = 1;
+    let currentQuestion = null;
+    let userLevelStars = JSON.parse(localStorage.getItem('mwc_stars') || '{}');
+
+    let myProfile = JSON.parse(localStorage.getItem('mwc_profile') || 'null') || {
+      name: "Player", country: "My Country", color: "#22c55e", number: 10
+    };
+    let friendProfile = JSON.parse(localStorage.getItem('mwc_friend') || 'null') || {
+      name: "Friend", country: "Rivals", color: "#ef4444", number: 9
+    };
+
+    const QUESTION_TIME = 20;
+    let timeLeft = QUESTION_TIME;
+    let timerInterval = null;
+    const TIMER_CIRCUMFERENCE = 2 * Math.PI * 17;
+
+    const M = {
+      active: false,
+      turn: "me",
+      meGoals: 0,
+      friendGoals: 0,
+      seed: 0,
+      questionIndex: 0,
+      target: 10,
+      finished: false
+    };
+
+    const TOURNAMENT_LEVELS = [
+      { id: 1, name: "Level 1: Warm-Up", desc: "Adding Normal Numbers", type: "add_normal" },
+      { id: 2, name: "Level 2: Negative Numbers", desc: "Adding Directed Numbers", type: "add_directed" },
+      { id: 3, name: "Level 3: Fractions", desc: "Adding Fractions", type: "add_fractions" },
+      { id: 4, name: "Level 4: Decimals", desc: "Adding Decimals", type: "add_decimals" },
+      { id: 5, name: "Level 5: Subtraction Mix", desc: "Subtractions across all types", type: "sub_mix" },
+      { id: 6, name: "Level 6: Multiplication Mix", desc: "Multiplication & Subtraction", type: "mul_mix" },
+      { id: 7, name: "Level 7: Division Mix", desc: "Division & Subtraction", type: "div_mix" }
+    ];
+
+    // ============================================================
+    //  COLOUR HELPERS
+    // ============================================================
+    function lighten(hex, amt) {
+      const n = parseInt(hex.slice(1), 16);
+      let r = (n >> 16) + amt, g = ((n >> 8) & 0xff) + amt, b = (n & 0xff) + amt;
+      r = Math.min(255, Math.max(0, r)); g = Math.min(255, Math.max(0, g)); b = Math.min(255, Math.max(0, b));
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+    function darken(hex, amt) {
+      const n = parseInt(hex.slice(1), 16);
+      let r = (n >> 16) - amt, g = ((n >> 8) & 0xff) - amt, b = (n & 0xff) - amt;
+      r = Math.min(255, Math.max(0, r)); g = Math.min(255, Math.max(0, g)); b = Math.min(255, Math.max(0, b));
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    // ============================================================
+    //  PROFILES
+    // ============================================================
+    function loadProfileInputs() {
+      document.getElementById('myName').value = myProfile.name;
+      document.getElementById('myCountryName').value = myProfile.country;
+      document.getElementById('myCountryColor').value = myProfile.color;
+      document.getElementById('myJerseyNumber').value = myProfile.number;
+
+      document.getElementById('friendName').value = friendProfile.name;
+      document.getElementById('friendCountryName').value = friendProfile.country;
+      document.getElementById('friendCountryColor').value = friendProfile.color;
+      document.getElementById('friendJerseyNumber').value = friendProfile.number;
+
+      updateMyPreview();
+      updateFriendPreview();
+    }
+    function updateMyPreview() {
+      document.getElementById('profilePreviewName').textContent = document.getElementById('myName').value || "Player";
+      document.getElementById('profilePreviewNumber').textContent = document.getElementById('myJerseyNumber').value || "10";
+    }
+    function updateFriendPreview() {
+      document.getElementById('friendPreviewName').textContent = document.getElementById('friendName').value || "Friend";
+      document.getElementById('friendPreviewNumber').textContent = document.getElementById('friendJerseyNumber').value || "9";
+    }
+    function saveMyProfile() {
+      const name = document.getElementById('myName').value.trim() || "Player";
+      const country = document.getElementById('myCountryName').value.trim() || "My Country";
+      const color = document.getElementById('myCountryColor').value || "#22c55e";
+      let number = parseInt(document.getElementById('myJerseyNumber').value, 10);
+      if (!number || number < 1) number = 10;
+      if (number > 99) number = 99;
+      myProfile = { name, country, color, number };
+      localStorage.setItem('mwc_profile', JSON.stringify(myProfile));
+      updateMyPreview();
+      renderLevelHub();
+      toast("Profile saved", event.target);
+    }
+    function saveFriendProfile() {
+      const name = document.getElementById('friendName').value.trim() || "Friend";
+      const country = document.getElementById('friendCountryName').value.trim() || "Rivals";
+      const color = document.getElementById('friendCountryColor').value || "#ef4444";
+      let number = parseInt(document.getElementById('friendJerseyNumber').value, 10);
+      if (!number || number < 1) number = 9;
+      if (number > 99) number = 99;
+      friendProfile = { name, country, color, number };
+      localStorage.setItem('mwc_friend', JSON.stringify(friendProfile));
+      updateFriendPreview();
+      toast("Friend saved", event.target);
+    }
+    function toast(msg, btn) {
+      if (!btn) return;
+      const old = btn.textContent;
+      btn.textContent = "Saved ✓";
+      setTimeout(() => { btn.textContent = old; }, 1000);
+    }
+
+    // ============================================================
+    //  HUB / LEVELS
+    // ============================================================
+    function renderLevelHub() {
+      const grid = document.getElementById('levelGrid');
+      grid.innerHTML = '';
+      TOURNAMENT_LEVELS.forEach(lvl => {
+        const stars = userLevelStars[lvl.id] || 0;
+        const card = document.createElement('div');
+        card.className = "bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/50 rounded-xl p-4 transition transform hover:-translate-y-1 cursor-pointer flex flex-col justify-between";
+        card.onclick = () => startPractice(lvl.id);
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">${lvl.name}</span>
+              <span class="text-amber-400 text-xs">⭐ ${stars}/3</span>
+            </div>
+            <div class="flex items-center gap-2 mb-1">
+              <h4 class="font-bold text-slate-100 text-sm">${lvl.desc}</h4>
+            </div>
+            <p class="text-xs text-slate-400">Practise solo</p>
+          </div>
+          <button class="mt-4 w-full bg-emerald-600/80 hover:bg-emerald-500 text-slate-950 text-xs font-bold py-2 rounded-lg transition">Practise</button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function applyMyKit() {
+      const c = myProfile.color;
+      document.getElementById('jerseyTop').setAttribute('stop-color', lighten(c, 40));
+      document.getElementById('jerseyMid').setAttribute('stop-color', c);
+      document.getElementById('jerseyBot').setAttribute('stop-color', darken(c, 40));
+      document.getElementById('jerseyNumber').textContent = myProfile.number;
+      document.getElementById('kickerWrapper').style.filter =
+        `drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px ${c}88)`;
+    }
+    function applyFriendKit() {
+      const c = friendProfile.color;
+      document.getElementById('jerseyTop').setAttribute('stop-color', lighten(c, 40));
+      document.getElementById('jerseyMid').setAttribute('stop-color', c);
+      document.getElementById('jerseyBot').setAttribute('stop-color', darken(c, 40));
+      document.getElementById('jerseyNumber').textContent = friendProfile.number;
+      document.getElementById('kickerWrapper').style.filter =
+        `drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px ${c}88)`;
+    }
+
+    // ============================================================
+    //  PRACTICE
+    // ============================================================
+    function startPractice(lvlId) {
+      M.active = false;
+      currentLevel = lvlId;
+      goalsScored = 0;
+      totalShots = 0;
+      document.getElementById('mpScoreStrip').classList.add('hidden');
+      document.getElementById('levelHub').classList.add('hidden');
+      document.getElementById('matchArena').classList.remove('hidden');
+      document.getElementById('matchArena').classList.add('flex');
+
+      const config = TOURNAMENT_LEVELS.find(l => l.id === lvlId) || TOURNAMENT_LEVELS[0];
+      document.getElementById('matchTitle').textContent = "Practice — " + config.name;
+      document.getElementById('matchSub').textContent = `${myProfile.name} (${myProfile.country}) — ${config.desc}`;
+      document.getElementById('goalLabel').textContent = "GOALS";
+      document.getElementById('goalCounter').innerText = `0 / 10`;
+      document.getElementById('qTurnLabel').textContent = "Solve to Shoot";
+      applyMyKit();
+      nextQuestion();
+    }
+
+    function openFriendProfileAndStart() {
+      document.getElementById('friendName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      startMatch();
+    }
+
+    // ============================================================
+    //  1v1 PENALTY MATCH (local hot-seat)
+    // ============================================================
+    function startMatch() {
+      M.active = true;
+      M.finished = false;
+      M.turn = "me";
+      M.meGoals = 0;
+      M.friendGoals = 0;
+      M.seed = Math.floor(Math.random() * 999999) + 1;
+      M.questionIndex = 0;
+      currentLevel = 1;
+      goalsScored = 0;
+      totalShots = 0;
+
+      document.getElementById('levelHub').classList.add('hidden');
+      document.getElementById('matchArena').classList.remove('hidden');
+      document.getElementById('matchArena').classList.add('flex');
+      document.getElementById('mpScoreStrip').classList.remove('hidden');
+      document.getElementById('mpYouName').textContent = myProfile.name;
+      document.getElementById('mpOppName').textContent = friendProfile.name;
+      document.getElementById('mpYouGoals').textContent = 0;
+      document.getElementById('mpOppGoals').textContent = 0;
+
+      document.getElementById('matchTitle').textContent = "Penalty Match";
+      document.getElementById('goalLabel').textContent = "GOALS";
+      updateMatchTurnUI();
+      nextQuestion();
+    }
+
+    function updateMatchTurnUI() {
+      const isMe = M.turn === "me";
+      const shooter = isMe ? myProfile : friendProfile;
+      document.getElementById('mpYouGoals').textContent = M.meGoals;
+      document.getElementById('mpOppGoals').textContent = M.friendGoals;
+      document.getElementById('mpTurnTag').textContent = isMe ? "Your turn" : `${friendProfile.name}'s turn`;
+      document.getElementById('qTurnLabel').textContent = isMe ? "Your turn — Solve to Shoot" : `${friendProfile.name}'s turn — Solve to Shoot`;
+      document.getElementById('matchSub').textContent = `${shooter.name} (${shooter.country}) shooting`;
+      document.getElementById('goalCounter').innerText = `You ${M.meGoals} – ${M.friendGoals} Friend`;
+
+      if (isMe) applyMyKit(); else applyFriendKit();
+    }
+
+    // ============================================================
+    //  QA SKIP
+    // ============================================================
+    function qaSkipStage() {
+      if (M.active) { alert("QA Skip is disabled in penalty matches."); return; }
+      stopTimer();
+      alert(`⚡ QA Skip Triggered! Level ${currentLevel} completed instantly.`);
+      userLevelStars[currentLevel] = 3;
+      localStorage.setItem('mwc_stars', JSON.stringify(userLevelStars));
+      document.getElementById('matchArena').classList.add('hidden');
+      document.getElementById('levelHub').classList.remove('hidden');
+      renderLevelHub();
+    }
+
+    // ============================================================
+    //  TIMER
+    // ============================================================
+    function startTimer() {
+      stopTimer();
+      timeLeft = QUESTION_TIME;
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) { stopTimer(); handleTimeout(); }
+      }, 1000);
+    }
+    function stopTimer() {
+      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    }
+    function updateTimerDisplay() {
+      const ring = document.getElementById('timerRing');
+      const text = document.getElementById('timerText');
+      text.textContent = Math.max(0, timeLeft);
+      const fraction = Math.max(0, timeLeft) / QUESTION_TIME;
+      ring.style.strokeDashoffset = TIMER_CIRCUMFERENCE * (1 - fraction);
+      let color = '#22c55e';
+      if (timeLeft <= 5) {
+        color = '#ef4444'; ring.classList.add('timer-danger');
+        text.classList.remove('text-emerald-400', 'text-amber-400'); text.classList.add('text-rose-400');
+      } else if (timeLeft <= 10) {
+        color = '#f59e0b'; ring.classList.remove('timer-danger');
+        text.classList.remove('text-emerald-400', 'text-rose-400'); text.classList.add('text-amber-400');
+      } else {
+        ring.classList.remove('timer-danger');
+        text.classList.remove('text-rose-400', 'text-amber-400'); text.classList.add('text-emerald-400');
+      }
+      ring.style.stroke = color;
+    }
+    function resetTimerVisuals() {
+      const ring = document.getElementById('timerRing');
+      const text = document.getElementById('timerText');
+      ring.classList.remove('timer-danger');
+      ring.style.stroke = '#22c55e';
+      text.classList.remove('text-rose-400', 'text-amber-400');
+      text.classList.add('text-emerald-400');
+      text.textContent = QUESTION_TIME;
+      ring.style.strokeDashoffset = 0;
+    }
+
+    // ============================================================
+    //  TIMEOUT
+    // ============================================================
+    function handleTimeout() {
+      if (isProcessingShot) return;
+      isProcessingShot = true;
+      totalShots++;
+
+      const ball = document.getElementById('soccerBall');
+      const keeperWrapper = document.getElementById('keeperWrapper');
+      const kickerWrapper = document.getElementById('kickerWrapper');
+      const banner = document.getElementById('commentaryBanner');
+      const keeperDivesRight = Math.random() > 0.5;
+
+      kickerWrapper.classList.add('animate-kicker-swing');
+
+      setTimeout(() => {
+        kickerWrapper.classList.remove('animate-kicker-swing');
+        kickerWrapper.classList.add('animate-kicker-follow');
+        ball.classList.add(keeperDivesRight ? 'animate-ball-caught-right' : 'animate-ball-caught-left');
+        keeperWrapper.classList.add(keeperDivesRight ? 'animate-catch-right' : 'animate-catch-left');
+        keeperWrapper.style.filter = "drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 20px rgba(250,204,21,1))";
+        banner.innerText = "⏰ TIME'S UP! Keeper catches the ball!";
+        banner.className = "z-20 bg-rose-950/90 border border-rose-500 px-6 py-1.5 rounded-full text-xs font-bold text-rose-300 opacity-100 transition-all duration-300 transform translate-y-0 backdrop-blur-sm shadow-lg shadow-rose-500/30";
+      }, 350);
+
+      setTimeout(() => {
+        banner.className = "z-20 bg-slate-900/80 border border-slate-700 px-6 py-1.5 rounded-full text-xs font-semibold text-amber-300 transition-all duration-300 opacity-0 transform -translate-y-2 backdrop-blur-sm";
+        afterShot(false);
+      }, 1800);
+    }
+
+    // ============================================================
+    //  RESET ACTORS
+    // ============================================================
+    function resetActors() {
+      const ball = document.getElementById('soccerBall');
+      const keeperWrapper = document.getElementById('keeperWrapper');
+      const kickerWrapper = document.getElementById('kickerWrapper');
+      ball.className = "ball-3d relative z-20";
+      ball.style.transform = ""; ball.style.opacity = "1"; ball.style.transition = "";
+      keeperWrapper.classList.remove('animate-dive-left','animate-dive-right','animate-catch-left','animate-catch-right');
+      keeperWrapper.style.transform = "";
+      keeperWrapper.style.filter = "drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(255,215,0,0.3))";
+      kickerWrapper.classList.remove('animate-kicker-runup','animate-kicker-swing','animate-kicker-follow');
+      kickerWrapper.style.transform = "";
+    }
+
+    // ============================================================
+    //  NEXT QUESTION
+    // ============================================================
+    function nextQuestion() {
+      isProcessingShot = false;
+      resetActors();
+      resetTimerVisuals();
+
+      const lvl = TOURNAMENT_LEVELS.find(l => l.id === currentLevel) || TOURNAMENT_LEVELS[0];
+
+      if (M.active) {
+        currentQuestion = generateSeededQuestion(lvl.type, M.seed, M.questionIndex);
+      } else {
+        currentQuestion = generateQuestionByType(lvl.type);
+      }
+
+      document.getElementById('questionText').innerText = currentQuestion.q;
+
+      const optsContainer = document.getElementById('optionsContainer');
+      optsContainer.innerHTML = '';
+      currentQuestion.opts.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "bg-slate-700/80 hover:bg-slate-600 border border-slate-600 text-lg font-bold py-3.5 px-4 rounded-xl transition active:scale-95 text-amber-300 shadow-md hover:shadow-amber-500/20";
+        btn.innerText = opt;
+        btn.onclick = () => submitAnswer(opt);
+        optsContainer.appendChild(btn);
+      });
+
+      startTimer();
+    }
+
+    // ============================================================
+    //  SHARED (seeded) QUESTION GENERATION
+    // ============================================================
+    function mulberry32(seed) {
+      return function() {
+        seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    function generateSeededQuestion(type, seed, index) {
+      const rng = mulberry32((seed || 1) * 7919 + index * 104729);
+      const r = (n) => Math.floor(rng() * n);
+      let q = "", ans = "", opts = [];
+      if (type === "add_normal") {
+        let a = r(20) + 1, b = r(20) + 1;
+        q = `${a} + ${b} = ?`; ans = (a + b).toString();
+        opts = [a + b, a + b + 2, a + b - 1, a + b + 5];
+      } else if (type === "add_directed") {
+        let a = r(15) - 8, b = r(15) - 8;
+        q = `(${a}) + (${b}) = ?`; ans = (a + b).toString();
+        opts = [a + b, a + b + 3, a + b - 2, -(a + b)];
+      } else if (type === "add_fractions") {
+        q = `1/4 + 2/4 = ?`; ans = `3/4`;
+        opts = ["3/4", "2/4", "1/2", "3/8"];
+      } else if (type === "add_decimals") {
+        let a = (r(5) + 1).toFixed(1), b = (r(5) + 1).toFixed(1);
+        q = `${a} + ${b} = ?`;
+        ans = (parseFloat(a) + parseFloat(b)).toFixed(1);
+        opts = [ans, (parseFloat(ans) + 0.5).toFixed(1), (parseFloat(ans) - 0.2).toFixed(1), (parseFloat(ans) + 1.1).toFixed(1)];
+      } else {
+        let a = r(25) + 5, b = r(15) + 1;
+        q = `${a} - ${b} = ?`; ans = (a - b).toString();
+        opts = [a - b, a - b + 2, a - b - 3, a + b];
+      }
+      opts = [...new Set(opts)].sort(() => rng() - 0.5);
+      return { q, ans, opts };
+    }
+
+    function generateQuestionByType(type) {
+      let q = "", ans = "", opts = [];
+      if (type === "add_normal") {
+        let a = Math.floor(Math.random() * 20) + 1, b = Math.floor(Math.random() * 20) + 1;
+        q = `${a} + ${b} = ?`; ans = (a + b).toString();
+        opts = [a + b, a + b + 2, a + b - 1, a + b + 5];
+      } else if (type === "add_directed") {
+        let a = Math.floor(Math.random() * 15) - 8, b = Math.floor(Math.random() * 15) - 8;
+        q = `(${a}) + (${b}) = ?`; ans = (a + b).toString();
+        opts = [a + b, a + b + 3, a + b - 2, -(a + b)];
+      } else if (type === "add_fractions") {
+        q = `1/4 + 2/4 = ?`; ans = `3/4`;
+        opts = ["3/4", "2/4", "1/2", "3/8"];
+      } else if (type === "add_decimals") {
+        let a = (Math.random() * 5 + 1).toFixed(1), b = (Math.random() * 5 + 1).toFixed(1);
+        q = `${a} + ${b} = ?`;
+        ans = (parseFloat(a) + parseFloat(b)).toFixed(1);
+        opts = [ans, (parseFloat(ans) + 0.5).toFixed(1), (parseFloat(ans) - 0.2).toFixed(1), (parseFloat(ans) + 1.1).toFixed(1)];
+      } else {
+        let a = Math.floor(Math.random() * 25) + 5, b = Math.floor(Math.random() * 15) + 1;
+        q = `${a} - ${b} = ?`; ans = (a - b).toString();
+        opts = [a - b, a - b + 2, a - b - 3, a + b];
+      }
+      opts = [...new Set(opts)].sort(() => Math.random() - 0.5);
+      return { q, ans, opts };
+    }
+
+    // ============================================================
+    //  SUBMIT ANSWER
+    // ============================================================
+    function submitAnswer(selectedOpt) {
+      if (isProcessingShot) return;
+      isProcessingShot = true;
+      totalShots++;
+      stopTimer();
+
+      const ball = document.getElementById('soccerBall');
+      const keeperWrapper = document.getElementById('keeperWrapper');
+      const kickerWrapper = document.getElementById('kickerWrapper');
+      const net = document.getElementById('goalNet');
+      const banner = document.getElementById('commentaryBanner');
+
+      const isCorrect = (selectedOpt.toString() === currentQuestion.ans.toString());
+      const keeperDivesRight = Math.random() > 0.5;
+
+      kickerWrapper.classList.add('animate-kicker-runup');
+
+      setTimeout(() => {
+        kickerWrapper.classList.remove('animate-kicker-runup');
+        kickerWrapper.classList.add('animate-kicker-swing');
+      }, 300);
+
+      setTimeout(() => {
+        kickerWrapper.classList.remove('animate-kicker-swing');
+        kickerWrapper.classList.add('animate-kicker-follow');
+
+        if (isCorrect) {
+          const ballGoesLeft = keeperDivesRight;
+          ball.classList.add(ballGoesLeft ? 'animate-kick-top-left-real' : 'animate-kick-top-right-real');
+          keeperWrapper.classList.add(keeperDivesRight ? 'animate-dive-right' : 'animate-dive-left');
+          keeperWrapper.style.filter = "drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 16px rgba(239,68,68,0.6))";
+          setTimeout(() => { net.classList.add('animate-net-bulge'); }, 350);
+          banner.innerText = ballGoesLeft ? "⚽ GOAL! Top Left Corner Rocket!" : "⚽ GOAL! Top Right Corner Screamer!";
+          banner.className = "z-20 bg-emerald-950/90 border border-emerald-500 px-6 py-1.5 rounded-full text-xs font-bold text-emerald-300 opacity-100 transition-all duration-300 transform translate-y-0 backdrop-blur-sm shadow-lg shadow-emerald-500/30";
+        } else {
+          ball.classList.add(keeperDivesRight ? 'animate-ball-caught-right' : 'animate-ball-caught-left');
+          keeperWrapper.classList.add(keeperDivesRight ? 'animate-catch-right' : 'animate-catch-left');
+          keeperWrapper.style.filter = "drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 20px rgba(250,204,21,1))";
+          banner.innerText = "🧤 CAUGHT! Stickman keeper grabs the ball!";
+          banner.className = "z-20 bg-rose-950/90 border border-rose-500 px-6 py-1.5 rounded-full text-xs font-bold text-rose-300 opacity-100 transition-all duration-300 transform translate-y-0 backdrop-blur-sm shadow-lg shadow-rose-500/30";
+        }
+      }, 650);
+
+      setTimeout(() => {
+        net.classList.remove('animate-net-bulge');
+        banner.className = "z-20 bg-slate-900/80 border border-slate-700 px-6 py-1.5 rounded-full text-xs font-semibold text-amber-300 transition-all duration-300 opacity-0 transform -translate-y-2 backdrop-blur-sm";
+        afterShot(isCorrect);
+      }, 1800);
+    }
+
+    // ============================================================
+    //  AFTER SHOT
+    // ============================================================
+    function afterShot(isCorrect) {
+      if (M.active) {
+        if (isCorrect) {
+          if (M.turn === "me") M.meGoals++; else M.friendGoals++;
+        }
+        updateMatchTurnUI();
+
+        if (M.meGoals >= M.target || M.friendGoals >= M.target) {
+          endMatch();
+          return;
         }
 
-        // --- LEVEL HUB INITIALIZATION ---
-        function renderLevelHub() {
-            const grid = document.getElementById("level-hub-grid");
-            grid.innerHTML = "";
-
-            TOURNAMENT_LEVELS.forEach((lvl, index) => {
-                const stars = userLevelStars[lvl.id] || 0;
-                const isUnlocked = index === 0 || (userLevelStars[TOURNAMENT_LEVELS[index - 1].id] || 0) > 0;
-
-                const card = document.createElement("div");
-                card.className = `p-5 rounded-2xl border-2 transition backdrop-blur-md flex flex-col justify-between ${
-                    isUnlocked 
-                        ? "bg-slate-900/80 border-slate-700 hover:border-yellow-400/60 cursor-pointer shadow-lg hover:scale-[1.02]" 
-                        : "bg-slate-950/50 border-slate-900 opacity-60 cursor-not-allowed"
-                }`;
-
-                let starDisplay = "";
-                for (let i = 1; i <= 3; i++) {
-                    starDisplay += i <= stars ? "⭐️" : "🏽";
-                }
-
-                card.innerHTML = `
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Stage ${lvl.id}</span>
-                            <span>${isUnlocked ? starDisplay : "🔒"}</span>
-                        </div>
-                        <h4 class="text-lg font-black text-white">${lvl.name}</h4>
-                        <p class="text-xs text-slate-400 leading-relaxed">${lvl.desc}</p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
-                        <span class="text-[11px] font-bold text-slate-500">Target: 10 Goals</span>
-                        ${isUnlocked 
-                            ? `<button onclick="startLevel(${lvl.id})" class="px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black rounded-xl text-xs transition">PLAY</button>`
-                            : `<span class="text-xs font-bold text-slate-600">Locked</span>`
-                        }
-                    </div>
-                `;
-
-                grid.appendChild(card);
-            });
+        M.turn = (M.turn === "me") ? "friend" : "me";
+        M.questionIndex++;
+        updateMatchTurnUI();
+        nextQuestion();
+      } else {
+        if (isCorrect) {
+          goalsScored++;
+          document.getElementById('goalCounter').innerText = `${goalsScored} / 10`;
         }
-
-        // --- MATCH MANAGEMENT ---
-        function startLevel(levelId) {
-            currentLevel = TOURNAMENT_LEVELS.find(l => l.id === levelId) || TOURNAMENT_LEVELS[0];
-            goalsScored = 0;
-            totalShots = 0;
-            isProcessingShot = false;
-
-            document.getElementById("main-menu").classList.add("hidden");
-            document.getElementById("match-screen").classList.remove("hidden");
-            document.getElementById("current-stage-title").innerText = `Level ${currentLevel.id}`;
-            document.getElementById("match-target-goals").innerText = currentLevel.targetGoals;
-            document.getElementById("match-goals").innerText = "0";
-            document.getElementById("match-shots").innerText = "0";
-
-            const timerBox = document.getElementById("timer-box");
-            if (currentLevel.timer > 0) {
-                timerBox.classList.remove("hidden");
-            } else {
-                timerBox.classList.add("hidden");
-            }
-
-            playWhistleSound();
-            generateQuestion();
+        if (goalsScored >= 10) {
+          alert(`🏆 Practice Complete! ${myProfile.name}, you scored 10 goals!`);
+          userLevelStars[currentLevel] = 3;
+          localStorage.setItem('mwc_stars', JSON.stringify(userLevelStars));
+          document.getElementById('matchArena').classList.add('hidden');
+          document.getElementById('levelHub').classList.remove('hidden');
+          renderLevelHub();
+          return;
         }
+        nextQuestion();
+      }
+    }
 
-        function returnToMenu() {
-            clearInterval(timerInterval);
-            document.getElementById("match-screen").classList.add("hidden");
-            document.getElementById("victory-modal").classList.add("hidden");
-            document.getElementById("main-menu").classList.remove("hidden");
-            renderLevelHub();
-        }
+    // ============================================================
+    //  MATCH END
+    // ============================================================
+    function endMatch() {
+      M.finished = true;
+      stopTimer();
+      const meWon = M.meGoals > M.friendGoals;
+      const tie = M.meGoals === M.friendGoals;
+      document.getElementById('goTitle').textContent = tie ? "Draw!" : (meWon ? "You Win! 🏆" : "You Lost");
+      document.getElementById('goTitle').className = tie
+        ? "text-2xl font-black text-amber-300"
+        : (meWon ? "text-2xl font-black text-emerald-300" : "text-2xl font-black text-rose-300");
+      document.getElementById('goScore').textContent = `${M.meGoals} – ${M.friendGoals}`;
+      document.getElementById('goSub').textContent = tie
+        ? "What a match! Both players scored the same."
+        : `${meWon ? myProfile.name : friendProfile.name} won the penalty match.`;
+      document.getElementById('gameOverModal').classList.remove('hidden');
+    }
 
-        // --- QUESTION GENERATOR ---
-        function generateQuestion() {
-            if (goalsScored >= currentLevel.targetGoals) {
-                completeMatch();
-                return;
-            }
+    function backToHubFromGame() {
+      document.getElementById('gameOverModal').classList.add('hidden');
+      document.getElementById('matchArena').classList.add('hidden');
+      document.getElementById('levelHub').classList.remove('hidden');
+      M.active = false;
+      M.finished = false;
+      M.turn = "me";
+      M.meGoals = 0;
+      M.friendGoals = 0;
+      M.questionIndex = 0;
+      document.getElementById('mpScoreStrip').classList.add('hidden');
+      renderLevelHub();
+    }
 
-            clearInterval(timerInterval);
-            if (currentLevel.timer > 0) {
-                startTimer();
-            }
+    // ============================================================
+    //  MISC UI
+    // ============================================================
+    function openTutorial() { document.getElementById('tutorialModal').classList.remove('hidden'); }
+    function closeTutorial() { document.getElementById('tutorialModal').classList.add('hidden'); }
+    function showHint() { alert(`💡 Coach Hint:\nFor "${currentQuestion.q}", the correct answer is ${currentQuestion.ans}!`); }
 
-            const op = currentLevel.ops[Math.floor(Math.random() * currentLevel.ops.length)];
-            let num1, num2, answer;
+    document.addEventListener('input', (e) => {
+      if (e.target.id === 'myName' || e.target.id === 'myJerseyNumber') updateMyPreview();
+      if (e.target.id === 'friendName' || e.target.id === 'friendJerseyNumber') updateFriendPreview();
+    });
 
-            if (op === "+") {
-                num1 = Math.floor(Math.random() * (currentLevel.max - currentLevel.min + 1)) + currentLevel.min;
-                num2 = Math.floor(Math.random() * (currentLevel.max - currentLevel.min + 1)) + currentLevel.min;
-                answer = num1 + num2;
-            } else {
-                num1 = Math.floor(Math.random() * (currentLevel.max - currentLevel.min + 1)) + currentLevel.min + 5;
-                num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
-                answer = num1 - num2;
-            }
-
-            let equationStr = "";
-            let hint = "";
-
-            if (currentLevel.missingTerm) {
-                const isFirstMissing = Math.random() < 0.5;
-                if (op === "+") {
-                    if (isFirstMissing) {
-                        equationStr = `? + ${num2} = ${answer}`;
-                        hint = `To find the missing starting number, subtract ${num2} from ${answer}: (${answer} - ${num2} = ${num1}).`;
-                        currentQuestion = { answer: num1, hint };
-                    } else {
-                        equationStr = `${num1} + ? = ${answer}`;
-                        hint = `To find the missing number, subtract ${num1} from ${answer}: (${answer} - ${num1} = ${num2}).`;
-                        currentQuestion = { answer: num2, hint };
-                    }
-                } else {
-                    equationStr = `${num1} - ? = ${answer}`;
-                    hint = `To find the missing subtracted number, subtract ${answer} from ${num1}: (${num1} - ${answer} = ${num2}).`;
-                    currentQuestion = { answer: num2, hint };
-                }
-            } else {
-                equationStr = `${num1} ${op} ${num2} = ?`;
-                hint = op === "+" 
-                    ? `Add ${num1} and ${num2} together.` 
-                    : `Subtract ${num2} from ${num1}.`;
-                currentQuestion = { answer, hint };
-            }
-
-            document.getElementById("equation-display").innerText = equationStr;
-            renderOptions(currentQuestion.answer);
-        }
-
-        function renderOptions(correctAnswer) {
-            const grid = document.getElementById("options-grid");
-            grid.innerHTML = "";
-
-            const options = new Set([correctAnswer]);
-            while (options.size < 4) {
-                const offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
-                const wrongOption = Math.max(1, correctAnswer + offset);
-                options.add(wrongOption);
-            }
-
-            const shuffled = Array.from(options).sort(() => Math.random() - 0.5);
-
-            shuffled.forEach(opt => {
-                const btn = document.createElement("button");
-                btn.onclick = () => submitShot(opt);
-                btn.className = "py-4 bg-slate-800 hover:bg-yellow-500 hover:text-slate-950 border-2 border-slate-700 hover:border-yellow-300 text-white font-black text-2xl rounded-2xl transition shadow-lg transform active:scale-95";
-                btn.innerText = opt;
-                grid.appendChild(btn);
-            });
-        }
-
-        // --- SHOT LOGIC ---
-        function submitShot(selectedAnswer) {
-            if (isProcessingShot) return;
-            isProcessingShot = true;
-            clearInterval(timerInterval);
-            totalShots++;
-
-            const ball = document.getElementById("soccer-ball");
-            const keeper = document.getElementById("goalkeeper");
-            const commentary = document.getElementById("commentary-banner");
-
-            const isCorrect = selectedAnswer === currentQuestion.answer;
-
-            if (isCorrect) {
-                goalsScored++;
-                ball.className = "text-5xl animate-kick z-20";
-                keeper.style.transform = "translateX(0px)";
-                commentary.innerText = GOAL_COMMENTARIES[Math.floor(Math.random() * GOAL_COMMENTARIES.length)];
-                commentary.className = "text-center font-bold text-sm sm:text-base text-emerald-400";
-            } else {
-                const moveDirection = Math.random() < 0.5 ? -60 : 60;
-                keeper.style.transform = `translateX(${moveDirection}px)`;
-                commentary.innerText = MISS_COMMENTARIES[Math.floor(Math.random() * MISS_COMMENTARIES.length)];
-                commentary.className = "text-center font-bold text-sm sm:text-base text-red-400";
-            }
-
-            document.getElementById("match-goals").innerText = goalsScored;
-            document.getElementById("match-shots").innerText = totalShots;
-
-            setTimeout(() => {
-                ball.className = "text-5xl transition-transform duration-300 z-20 drop-shadow-2xl cursor-default";
-                keeper.style.transform = "translateX(0px)";
-                isProcessingShot = false;
-
-                if (goalsScored >= currentLevel.targetGoals) {
-                    completeMatch();
-                } else {
-                    generateQuestion();
-                }
-            }, 800);
-        }
-
-        function startTimer() {
-            timeLeft = currentLevel.timer;
-            document.getElementById("timer-count").innerText = `${timeLeft}s`;
-
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById("timer-count").innerText = `${timeLeft}s`;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    submitShot(null); // Timeout count as miss
-                }
-            }, 1000);
-        }
-
-        // --- MATCH COMPLETION & VICTORY ---
-        function completeMatch() {
-            clearInterval(timerInterval);
-            const accuracy = Math.round((goalsScored / Math.max(1, totalShots)) * 100);
-
-            let stars = 1;
-            if (accuracy >= 90) stars = 3;
-            else if (accuracy >= 75) stars = 2;
-
-            userLevelStars[currentLevel.id] = Math.max(userLevelStars[currentLevel.id] || 0, stars);
-            localStorage.setItem("mathWorldCupStars", JSON.stringify(userLevelStars));
-
-            document.getElementById("victory-level-name").innerText = currentLevel.name;
-            document.getElementById("victory-accuracy").innerText = `${accuracy}%`;
-
-            let starStr = "";
-            for (let i = 0; i < stars; i++) starStr += "⭐️ ";
-            document.getElementById("victory-stars").innerText = starStr;
-
-            const nextBtn = document.getElementById("next-level-btn");
-            if (currentLevel.id < TOURNAMENT_LEVELS.length) {
-                nextBtn.classList.remove("hidden");
-            } else {
-                nextBtn.classList.add("hidden");
-            }
-
-            document.getElementById("victory-modal").classList.remove("hidden");
-        }
-
-        function playNextLevel() {
-            document.getElementById("victory-modal").classList.add("hidden");
-            if (currentLevel.id < TOURNAMENT_LEVELS.length) {
-                startLevel(currentLevel.id + 1);
-            } else {
-                returnToMenu();
-            }
-        }
-
-        // --- HINT & TUTORIAL MODALS ---
-        function showCoachHint() {
-            if (!currentQuestion) return;
-            document.getElementById("hint-text").innerText = currentQuestion.hint;
-            document.getElementById("hint-modal").classList.remove("hidden");
-        }
-        function closeHintModal() {
-            document.getElementById("hint-modal").classList.add("hidden");
-        }
-        function openTutorialModal() {
-            document.getElementById("tutorial-modal").classList.remove("hidden");
-        }
-        function closeTutorialModal() {
-            document.getElementById("tutorial-modal").classList.add("hidden");
-        }
-
-        // --- INITIALIZE ON LOAD ---
-        window.onload = function() {
-            renderLevelHub();
-        };
-    </script>
+    window.onload = function() {
+      loadProfileInputs();
+      renderLevelHub();
+    };
+  </script>
 </body>
 </html>
