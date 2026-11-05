@@ -6,6 +6,8 @@
   <title>Math World Cup: Practice & Online Penalty Matches</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- PeerJS for online multiplayer -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     .stadium-bg { background: radial-gradient(circle at 50% 30%, #0a1a2f 0%, #0b1f33 40%, #030b14 100%); }
     .pitch-grass {
@@ -191,7 +193,7 @@
             <span class="text-3xl">🌐</span>
             <div>
               <h2 class="text-lg font-bold text-purple-300">Online Match</h2>
-              <p class="text-xs text-slate-400">Different devices</p>
+              <p class="text-xs text-slate-400">Different devices — any country</p>
             </div>
           </div>
           <p class="text-sm text-slate-300 mb-4">Create a room and share the code — play with a friend from anywhere!</p>
@@ -437,6 +439,7 @@
         <p>3. <strong>Online 1v1</strong> — create a room, share the 4-letter code with a friend. They join from their own device and you both race to 10 goals on identical questions.</p>
         <p>4. Correct answer = top-corner goal. Wrong answer = keeper catches the ball.</p>
         <p>5. You have 20 seconds per question.</p>
+        <p>6. Peer-to-peer: no server needed, works around the world. Some restrictive networks may block the connection — try a different Wi-Fi if the room never connects.</p>
       </div>
       <button onclick="closeTutorial()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl transition">Got It!</button>
     </div>
@@ -452,7 +455,7 @@
 
       <div id="onlineSetup">
         <p class="text-xs text-slate-400 mb-3">Create a new room, or enter your friend's room code.</p>
-        <button onclick="createOnlineRoom()" class="w-full bg-purple-500 hover:bg-purple-400 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition mb-3">
+        <button id="createRoomBtn" onclick="createOnlineRoom()" class="w-full bg-purple-500 hover:bg-purple-400 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition mb-3">
           <i class="fas fa-plus mr-1"></i> Create Room (Host)
         </button>
         <div class="flex gap-2">
@@ -491,34 +494,6 @@
     </div>
   </div>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, get, onDisconnect, remove }
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-    // ⚠️ REPLACE WITH YOUR OWN FIREBASE CONFIG
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "000000000000",
-      appId: "1:000000000000:web:0000000000000000"
-    };
-
-    try {
-      const app = initializeApp(firebaseConfig);
-      const db = getDatabase(app);
-      window.FB = { db, ref, set, onValue, update, get, onDisconnect, remove };
-      window.FB_READY = true;
-    } catch (e) {
-      console.warn("Firebase failed:", e);
-      window.FB_READY = false;
-    }
-  </script>
-
   <script>
     // ============================================================
     //  STATE
@@ -539,7 +514,7 @@
     let timerInterval = null;
     const TIMER_CIRCUMFERENCE = 2 * Math.PI * 17;
 
-    // Online 1v1 state
+    // Online 1v1 state (PeerJS)
     const O = {
       active: false,
       roomCode: null,
@@ -550,7 +525,8 @@
       seed: null,
       questionIndex: 0,
       finished: false,
-      unsub: null
+      peer: null,
+      conn: null
     };
 
     const TOURNAMENT_LEVELS = [
@@ -936,13 +912,13 @@
       if (O.active) {
         if (isCorrect) {
           O.myGoals++;
-          pushOnlineScore();
+          sendPeer({ type: 'goal', goals: O.myGoals });
         }
         updateOnlineScoreboard();
         if (O.myGoals >= 10 || O.oppGoals >= 10) { endMatch(); return; }
         if (O.role === "host") {
           O.questionIndex++;
-          pushOnlineIndex();
+          sendPeer({ type: 'questionIndex', index: O.questionIndex });
         }
         nextQuestion();
         return;
@@ -987,151 +963,203 @@
       document.getElementById('gameOverModal').classList.add('hidden');
       document.getElementById('matchArena').classList.add('hidden');
       document.getElementById('levelHub').classList.remove('hidden');
-      if (O.unsub) { O.unsub(); O.unsub = null; }
+      cleanupPeer();
       O.active = false; O.finished = false; O.roomCode = null; O.role = null; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
       document.getElementById('mpScoreStrip').classList.add('hidden');
       renderLevelHub();
     }
 
     // ============================================================
-    //  ONLINE MULTIPLAYER
+    //  PEERJS ONLINE MULTIPLAYER
     // ============================================================
-    function fbOk() { return window.FB_READY && window.FB; }
+    function openOnlineModal() { document.getElementById('onlineModal').classList.remove('hidden'); }
+    function closeOnlineModal() { document.getElementById('onlineModal').classList.add('hidden'); }
+    function setOnlineStatus(msg, isError = false) {
+      const el = document.getElementById('onlineStatus');
+      el.textContent = msg || "";
+      el.className = isError
+        ? "text-[11px] text-rose-300 mt-2 min-h-[16px] font-semibold"
+        : "text-[11px] text-slate-400 mt-2 min-h-[16px]";
+      if (isError) alert("⚠️ " + msg);
+    }
+
     function randCode() {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       let s = "";
       for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
       return s;
     }
-    function openOnlineModal() { document.getElementById('onlineModal').classList.remove('hidden'); }
-    function closeOnlineModal() { document.getElementById('onlineModal').classList.add('hidden'); }
-    function setOnlineStatus(msg) { document.getElementById('onlineStatus').textContent = msg || ""; }
 
-    async function createOnlineRoom() {
-      if (!fbOk()) { setOnlineStatus("Multiplayer needs Firebase config. See the file header."); return; }
+    function cleanupPeer() {
+      if (O.conn) { try { O.conn.close(); } catch(e){} O.conn = null; }
+      if (O.peer) { try { O.peer.destroy(); } catch(e){} O.peer = null; }
+    }
+
+    function sendPeer(data) {
+      if (O.conn && O.conn.open) {
+        try { O.conn.send(data); } catch(e) { console.warn("send failed", e); }
+      }
+    }
+
+    // Host creates the room
+    function createOnlineRoom() {
+      cleanupPeer();
       const code = randCode();
-      O.roomCode = code; O.role = "host"; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.roomCode = code;
+      O.role = "host";
+      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
       O.seed = Math.floor(Math.random() * 999999) + 1;
+      O.finished = false;
 
-      const { db, ref, set, onDisconnect } = window.FB;
-      await set(ref(db, "rooms/" + code), {
-        host: { name: myProfile.name, goals: 0, number: myProfile.number, country: myProfile.country },
-        guest: null,
-        seed: O.seed,
-        questionIndex: 0,
-        started: false
-      });
-      onDisconnect(ref(db, "rooms/" + code)).remove();
+      // PeerJS peer ID is prefixed so codes don't collide with other PeerJS users
+      const peerId = "mwc-" + code;
+      O.peer = new Peer(peerId, { debug: 1 });
 
-      document.getElementById('onlineSetup').classList.add('hidden');
-      document.getElementById('onlineRoom').classList.remove('hidden');
-      document.getElementById('onlineRoomCode').textContent = code;
-      document.getElementById('onlineYouName').textContent = myProfile.name;
-      document.getElementById('onlineFriendName').textContent = "Waiting…";
-      document.getElementById('onlineStateText').textContent = "Waiting for a friend to join…";
-      document.getElementById('onlineStartBtn').disabled = true;
-      document.getElementById('onlineStartBtn').classList.remove('hidden');
-      document.getElementById('onlineWaitHost').classList.add('hidden');
-
-      listenRoom();
-    }
-
-    async function joinOnlineRoom() {
-      if (!fbOk()) { setOnlineStatus("Multiplayer needs Firebase config. See the file header."); return; }
-      const code = (document.getElementById('onlineCodeInput').value || "").trim().toUpperCase();
-      if (code.length !== 4) { setOnlineStatus("Enter a 4-letter code."); return; }
-
-      const { db, ref, set, get } = window.FB;
-      const snap = await get(ref(db, "rooms/" + code));
-      if (!snap.exists()) { setOnlineStatus("Room not found."); return; }
-      const data = snap.val();
-      if (data.guest) { setOnlineStatus("Room is full."); return; }
-
-      O.roomCode = code; O.role = "guest"; O.myGoals = 0; O.oppGoals = 0;
-      O.seed = data.seed; O.questionIndex = data.questionIndex || 0;
-      O.oppName = (data.host && data.host.name) || "Host";
-
-      await set(ref(db, `rooms/${code}/guest`), {
-        name: myProfile.name, goals: 0, number: myProfile.number, country: myProfile.country
+      O.peer.on('open', () => {
+        // Show room UI
+        document.getElementById('onlineSetup').classList.add('hidden');
+        document.getElementById('onlineRoom').classList.remove('hidden');
+        document.getElementById('onlineRoomCode').textContent = code;
+        document.getElementById('onlineYouName').textContent = myProfile.name;
+        document.getElementById('onlineFriendName').textContent = "Waiting…";
+        document.getElementById('onlineStateText').textContent = "Waiting for a friend to join…";
+        document.getElementById('onlineStartBtn').disabled = true;
+        document.getElementById('onlineStartBtn').classList.remove('hidden');
+        document.getElementById('onlineWaitHost').classList.add('hidden');
+        setOnlineStatus("");
       });
 
-      document.getElementById('onlineSetup').classList.add('hidden');
-      document.getElementById('onlineRoom').classList.remove('hidden');
-      document.getElementById('onlineRoomCode').textContent = code;
-      document.getElementById('onlineYouName').textContent = myProfile.name;
-      document.getElementById('onlineFriendName').textContent = O.oppName;
-      document.getElementById('onlineStateText').textContent = "Waiting for host to start…";
-      document.getElementById('onlineStartBtn').classList.add('hidden');
-      document.getElementById('onlineWaitHost').classList.remove('hidden');
-
-      listenRoom();
-    }
-
-    function listenRoom() {
-      if (!fbOk() || !O.roomCode) return;
-      if (O.unsub) O.unsub();
-      const { db, ref, onValue } = window.FB;
-      const unsub = onValue(ref(db, "rooms/" + O.roomCode), snap => {
-        const d = snap.val();
-        if (!d) return;
-
-        if (O.role === "host") {
-          if (d.guest) {
-            document.getElementById('onlineFriendName').textContent = d.guest.name || "Friend";
-            document.getElementById('onlineStateText').textContent = "Friend joined! Tap Start Match.";
-            document.getElementById('onlineStartBtn').disabled = false;
-          }
-          if (d.started) {
-            O.oppGoals = (d.guest && d.guest.goals) || 0;
-            O.oppName = (d.guest && d.guest.name) || "Friend";
-            updateOnlineScoreboard();
-            if (O.myGoals >= 10 || O.oppGoals >= 10) endMatch();
-          }
+      O.peer.on('error', (err) => {
+        console.error("Peer error:", err);
+        // 'unavailable-id' means the random 4-letter code is already taken
+        if (err.type === 'unavailable-id') {
+          setOnlineStatus("That code is busy. Creating another…", true);
+          setTimeout(createOnlineRoom, 500);
         } else {
-          if (d.started && !O.active) {
-            O.active = true;
-            O.seed = d.seed;
-            O.questionIndex = d.questionIndex || 0;
-            O.oppGoals = (d.host && d.host.goals) || 0;
-            O.oppName = (d.host && d.host.name) || "Host";
-            O.myGoals = (d.guest && d.guest.goals) || 0;
-            closeOnlineModal();
-            enterOnlineArena();
-          }
-          if (d.started && O.active) {
-            O.oppGoals = (d.host && d.host.goals) || 0;
-            if (d.guest) O.myGoals = d.guest.goals || O.myGoals;
-            updateOnlineScoreboard();
-            if (d.questionIndex !== undefined && d.questionIndex !== O.questionIndex && !isProcessingShot) {
-              O.questionIndex = d.questionIndex;
-              nextQuestion();
-            }
-            if (O.myGoals >= 10 || O.oppGoals >= 10) endMatch();
-          }
+          setOnlineStatus("Connection error: " + (err.type || err.message), true);
         }
       });
-      O.unsub = () => unsub();
+
+      O.peer.on('connection', (conn) => {
+        O.conn = conn;
+        conn.on('open', () => {
+          // Send my profile immediately
+          sendPeer({
+            type: 'profile',
+            name: myProfile.name,
+            color: myProfile.color,
+            number: myProfile.number
+          });
+          document.getElementById('onlineFriendName').textContent = "Friend connected!";
+          document.getElementById('onlineStateText').textContent = "Friend connected! Tap Start Match.";
+          document.getElementById('onlineStartBtn').disabled = false;
+        });
+        setupConnectionHandlers();
+      });
+
+      O.peer.on('disconnected', () => {
+        setOnlineStatus("Disconnected from signalling server.", true);
+      });
     }
 
-    async function hostStartOnlineMatch() {
-      if (!fbOk() || !O.roomCode) return;
-      const { db, ref, update } = window.FB;
-      O.active = true; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
-      await update(ref(db, "rooms/" + O.roomCode), { started: true, seed: O.seed, questionIndex: 0 });
+    // Guest joins
+    function joinOnlineRoom() {
+      cleanupPeer();
+      const code = (document.getElementById('onlineCodeInput').value || "").trim().toUpperCase();
+      if (code.length !== 4) { setOnlineStatus("Enter a 4-letter code.", true); return; }
+
+      O.roomCode = code;
+      O.role = "guest";
+      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.finished = false;
+
+      O.peer = new Peer({ debug: 1 });
+
+      O.peer.on('open', () => {
+        setOnlineStatus("Connecting to room " + code + "…");
+        O.conn = O.peer.connect("mwc-" + code, { reliable: true });
+
+        O.conn.on('open', () => {
+          // Send my profile
+          sendPeer({
+            type: 'profile',
+            name: myProfile.name,
+            color: myProfile.color,
+            number: myProfile.number
+          });
+          document.getElementById('onlineSetup').classList.add('hidden');
+          document.getElementById('onlineRoom').classList.remove('hidden');
+          document.getElementById('onlineRoomCode').textContent = code;
+          document.getElementById('onlineYouName').textContent = myProfile.name;
+          document.getElementById('onlineFriendName').textContent = "Connected";
+          document.getElementById('onlineStateText').textContent = "Waiting for host to start…";
+          document.getElementById('onlineStartBtn').classList.add('hidden');
+          document.getElementById('onlineWaitHost').classList.remove('hidden');
+          setOnlineStatus("");
+        });
+
+        setupConnectionHandlers();
+      });
+
+      O.peer.on('error', (err) => {
+        console.error("Peer error:", err);
+        if (err.type === 'peer-unavailable') {
+          setOnlineStatus("Room not found. Check the code.", true);
+        } else {
+          setOnlineStatus("Connection error: " + (err.type || err.message), true);
+        }
+      });
+    }
+
+    function setupConnectionHandlers() {
+      O.conn.on('data', (data) => {
+        if (!data || !data.type) return;
+
+        if (data.type === 'profile') {
+          O.oppName = data.name || "Friend";
+          document.getElementById('onlineFriendName').textContent = O.oppName;
+        }
+
+        if (data.type === 'start') {
+          // Guest receives the start signal
+          O.active = true;
+          O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+          closeOnlineModal();
+          enterOnlineArena();
+        }
+
+        if (data.type === 'goal') {
+          O.oppGoals = data.goals || 0;
+          updateOnlineScoreboard();
+          if (O.oppGoals >= 10) endMatch();
+        }
+
+        if (data.type === 'questionIndex') {
+          O.questionIndex = data.index;
+          if (!isProcessingShot) nextQuestion();
+        }
+
+        if (data.type === 'rematch') {
+          // optional
+        }
+      });
+
+      O.conn.on('close', () => {
+        if (O.active) {
+          alert("Friend disconnected.");
+          backToHubFromGame();
+        }
+      });
+    }
+
+    function hostStartOnlineMatch() {
+      if (!O.conn || !O.conn.open) { setOnlineStatus("Friend is not connected yet.", true); return; }
+      O.active = true;
+      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.finished = false;
+      sendPeer({ type: 'start' });
       closeOnlineModal();
       enterOnlineArena();
-    }
-
-    async function pushOnlineScore() {
-      if (!fbOk() || !O.roomCode) return;
-      const { db, ref, update } = window.FB;
-      const slot = O.role === "host" ? "host" : "guest";
-      await update(ref(db, `rooms/${O.roomCode}/${slot}`), { goals: O.myGoals });
-    }
-    async function pushOnlineIndex() {
-      if (!fbOk() || !O.roomCode) return;
-      const { db, ref, update } = window.FB;
-      await update(ref(db, "rooms/" + O.roomCode), { questionIndex: O.questionIndex });
     }
 
     function enterOnlineArena() {
@@ -1174,6 +1202,8 @@
     document.addEventListener('input', (e) => {
       if (e.target.id === 'myName' || e.target.id === 'myJerseyNumber') updateMyPreview();
     });
+
+    window.addEventListener('beforeunload', () => { cleanupPeer(); });
 
     window.onload = function() {
       loadProfileInputs();
