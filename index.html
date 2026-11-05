@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Math World Cup: Practice & Penalty Matches</title>
+  <title>Math World Cup: Practice & Online Penalty Matches</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -151,14 +151,13 @@
 </head>
 <body class="stadium-bg min-h-screen text-white font-sans flex flex-col justify-between select-none">
 
-  <!-- TOP BAR -->
   <header class="bg-slate-900/80 backdrop-blur border-b border-slate-700/50 p-4 sticky top-0 z-50">
     <div class="max-w-4xl mx-auto flex justify-between items-center">
       <div class="flex items-center space-x-3">
         <span class="text-3xl">🏆</span>
         <div>
           <h1 class="text-xl font-bold bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">MATH WORLD CUP</h1>
-          <p class="text-xs text-slate-400">Practice &amp; Penalty Matches</p>
+          <p class="text-xs text-slate-400">Practice &amp; Online Penalty Matches</p>
         </div>
       </div>
       <button onclick="openTutorial()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition">
@@ -167,41 +166,37 @@
     </div>
   </header>
 
-  <!-- MAIN -->
   <main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
 
-    <!-- HUB -->
     <div id="levelHub" class="space-y-6">
 
       <!-- MODE CARDS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- PRACTICE -->
         <div class="bg-slate-800/90 border border-emerald-500/40 rounded-2xl p-6 shadow-2xl backdrop-blur">
           <div class="flex items-center gap-3 mb-3">
             <span class="text-3xl">🎯</span>
             <div>
               <h2 class="text-lg font-bold text-emerald-300">Practice</h2>
-              <p class="text-xs text-slate-400">Solo penalty drills vs the keeper</p>
+              <p class="text-xs text-slate-400">Solo drills vs the keeper</p>
             </div>
           </div>
-          <p class="text-sm text-slate-300 mb-4">Pick any level to practise a math topic and score 10 goals.</p>
+          <p class="text-sm text-slate-300 mb-4">Pick a level and score 10 goals to finish.</p>
           <button onclick="startPractice(1)" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-lg py-3 px-6 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
             <i class="fas fa-futbol"></i> START PRACTICE
           </button>
         </div>
 
-        <!-- PENALTY MATCH -->
-        <div class="bg-slate-800/90 border border-sky-500/40 rounded-2xl p-6 shadow-2xl backdrop-blur">
+        <div class="bg-slate-800/90 border border-purple-500/40 rounded-2xl p-6 shadow-2xl backdrop-blur">
           <div class="flex items-center gap-3 mb-3">
-            <span class="text-3xl">⚔️</span>
+            <span class="text-3xl">🌐</span>
             <div>
-              <h2 class="text-lg font-bold text-sky-300">Penalty Match</h2>
-              <p class="text-xs text-slate-400">1v1 vs your friend — same questions</p>
+              <h2 class="text-lg font-bold text-purple-300">Online Match</h2>
+              <p class="text-xs text-slate-400">Different devices</p>
             </div>
           </div>
-          <p class="text-sm text-slate-300 mb-4">Set your friend's kit, then race to 10 goals on identical questions. First to 10 wins.</p>
-          <button onclick="openFriendProfileAndStart()" class="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-black text-lg py-3 px-6 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
-            <i class="fas fa-users"></i> PLAY VS FRIEND
+          <p class="text-sm text-slate-300 mb-4">Create a room and share the code — play with a friend from anywhere!</p>
+          <button onclick="openOnlineModal()" class="w-full bg-gradient-to-r from-purple-500 to-fuchsia-600 hover:from-purple-400 hover:to-fuchsia-500 text-white font-black text-lg py-3 px-6 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
+            <i class="fas fa-globe"></i> ONLINE 1v1
           </button>
         </div>
       </div>
@@ -236,36 +231,6 @@
         </div>
       </div>
 
-      <!-- FRIEND PROFILE -->
-      <div class="bg-slate-900/70 border border-sky-500/30 rounded-xl p-4 text-left">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-bold text-sky-300 flex items-center gap-2"><i class="fas fa-user-friends"></i> Friend Profile</h3>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-slate-200" id="friendPreviewName">Friend</span>
-            <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-black" id="friendPreviewNumber">9</span>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-slate-400 w-20">Name</label>
-            <input id="friendName" type="text" maxlength="20" placeholder="Friend's name"
-                   class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" value="Friend">
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-slate-400 w-20">Country</label>
-            <input id="friendCountryName" type="text" maxlength="20" placeholder="Friend's country"
-                   class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" value="Rivals">
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-slate-400 w-20">Jersey</label>
-            <input id="friendCountryColor" type="color" value="#ef4444" class="w-14 h-9 rounded border border-slate-600 bg-slate-800 cursor-pointer">
-            <input id="friendJerseyNumber" type="number" min="1" max="99" placeholder="9"
-                   class="w-20 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" value="9">
-            <button onclick="saveFriendProfile()" class="ml-auto bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition">Save</button>
-          </div>
-        </div>
-      </div>
-
       <!-- PRACTICE LEVELS -->
       <div>
         <h3 class="text-sm font-bold text-emerald-300 mb-2 flex items-center gap-2"><i class="fas fa-list"></i> Practice Levels</h3>
@@ -295,8 +260,7 @@
         </div>
       </div>
 
-      <!-- MATCH SCORE STRIP -->
-      <div id="mpScoreStrip" class="hidden w-full bg-slate-900/80 border border-sky-500/40 rounded-2xl p-3 shadow-xl">
+      <div id="mpScoreStrip" class="hidden w-full bg-slate-900/80 border border-purple-500/40 rounded-2xl p-3 shadow-xl">
         <div class="flex items-center justify-between text-xs gap-2">
           <div class="text-center flex-1 min-w-0">
             <div class="text-slate-400 mb-0.5">You</div>
@@ -310,10 +274,9 @@
             <div id="mpOppGoals" class="text-2xl font-black text-rose-400">0</div>
           </div>
         </div>
-        <div id="mpTurnTag" class="text-[11px] text-center text-amber-300 mt-1 font-bold">Your turn</div>
+        <div id="mpTurnTag" class="text-[11px] text-center text-amber-300 mt-1 font-bold">Online match — race to 10!</div>
       </div>
 
-      <!-- PITCH -->
       <div class="relative w-full h-96 pitch-grass rounded-3xl border-4 border-slate-600/60 overflow-hidden shadow-2xl flex flex-col justify-between items-center p-4">
 
         <div id="commentaryBanner" class="z-20 bg-slate-900/90 border border-slate-700 px-6 py-1.5 rounded-full text-xs font-bold text-amber-300 transition-all duration-300 opacity-0 transform -translate-y-2 backdrop-blur-sm">
@@ -328,7 +291,6 @@
           <div class="absolute top-3 left-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
           <div class="absolute top-3 right-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
 
-          <!-- KEEPER -->
           <div id="keeperWrapper" class="absolute bottom-0 z-30 transition-all duration-300" style="transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(255,215,0,0.3));">
             <svg id="keeperSVG" width="100" height="125" viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg">
               <defs>
@@ -386,7 +348,6 @@
           </div>
         </div>
 
-        <!-- KICKER + BALL -->
         <div class="relative flex items-end justify-center h-32 w-full">
           <div id="kickerWrapper" class="absolute z-40 transition-all duration-300" style="left: calc(50% - 92px); bottom: -4px; transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(56,189,248,0.4));">
             <svg id="kickerSVG" width="80" height="110" viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
@@ -446,7 +407,6 @@
         <div class="absolute inset-0 pointer-events-none opacity-10 bg-[repeating-linear-gradient(45deg,#fff_0px,#fff_1px,transparent_1px,transparent_6px)]"></div>
       </div>
 
-      <!-- QUESTION CARD -->
       <div class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-5 text-center shadow-xl backdrop-blur relative">
         <button onclick="showHint()" class="absolute top-4 right-4 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">💡 Coach Hint</button>
         <div class="absolute top-3 left-4 flex items-center gap-2">
@@ -472,13 +432,52 @@
         <button onclick="closeTutorial()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
       <div class="text-sm text-slate-300 space-y-3">
-        <p>1. Set <strong>My Player Profile</strong> (name, country, jersey colour, jersey number) and your <strong>Friend Profile</strong> (name, country, jersey colour, jersey number).</p>
-        <p>2. <strong>Practice</strong> — solo penalty drills vs the keeper. Score 10 goals to finish a level.</p>
-        <p>3. <strong>Penalty Match</strong> — you vs your friend on the same device. You both take turns answering the same questions and racing to 10 goals. First to 10 wins.</p>
+        <p>1. Set <strong>My Player Profile</strong> (name, country, jersey colour, jersey number).</p>
+        <p>2. <strong>Practice</strong> — solo drills vs the keeper. Score 10 goals to finish a level.</p>
+        <p>3. <strong>Online 1v1</strong> — create a room, share the 4-letter code with a friend. They join from their own device and you both race to 10 goals on identical questions.</p>
         <p>4. Correct answer = top-corner goal. Wrong answer = keeper catches the ball.</p>
-        <p>5. You have 20 seconds per question — the keeper catches it if time runs out.</p>
+        <p>5. You have 20 seconds per question.</p>
       </div>
       <button onclick="closeTutorial()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl transition">Got It!</button>
+    </div>
+  </div>
+
+  <!-- ONLINE MODAL -->
+  <div id="onlineModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-purple-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 class="text-lg font-bold text-purple-300 flex items-center gap-2"><i class="fas fa-globe"></i> Online 1v1</h3>
+        <button onclick="closeOnlineModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <div id="onlineSetup">
+        <p class="text-xs text-slate-400 mb-3">Create a new room, or enter your friend's room code.</p>
+        <button onclick="createOnlineRoom()" class="w-full bg-purple-500 hover:bg-purple-400 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition mb-3">
+          <i class="fas fa-plus mr-1"></i> Create Room (Host)
+        </button>
+        <div class="flex gap-2">
+          <input id="onlineCodeInput" type="text" maxlength="4" placeholder="CODE"
+                 class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white uppercase placeholder-slate-500 focus:outline-none focus:border-purple-400 text-center tracking-widest font-bold">
+          <button onclick="joinOnlineRoom()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-lg transition">Join</button>
+        </div>
+        <div id="onlineStatus" class="text-[11px] text-slate-400 mt-2 min-h-[16px]"></div>
+      </div>
+
+      <div id="onlineRoom" class="hidden text-center">
+        <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Room Code</div>
+        <div id="onlineRoomCode" class="text-4xl font-black tracking-[0.4em] text-amber-300 mb-2">----</div>
+        <button onclick="copyOnlineCode()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition mb-3"><i class="fas fa-copy mr-1"></i> Copy Code</button>
+        <div class="bg-slate-900/70 rounded-lg p-3 text-sm space-y-1 text-left mb-3">
+          <div class="flex justify-between"><span class="text-slate-400">You</span><span id="onlineYouName" class="font-bold text-emerald-300">—</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">Friend</span><span id="onlineFriendName" class="font-bold text-rose-300">Waiting…</span></div>
+        </div>
+        <div id="onlineStateText" class="text-xs text-slate-400 mb-3">Waiting for a friend to join…</div>
+        <button id="onlineStartBtn" onclick="hostStartOnlineMatch()" disabled
+                class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-bold py-2.5 rounded-xl transition">
+          Start Match (Host Only)
+        </button>
+        <div id="onlineWaitHost" class="hidden text-xs text-amber-300 animate-pulse mt-2">Waiting for host to start…</div>
+      </div>
     </div>
   </div>
 
@@ -491,6 +490,34 @@
       <button onclick="backToHubFromGame()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl transition">Back to Hub</button>
     </div>
   </div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update, get, onDisconnect, remove }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    // ⚠️ REPLACE WITH YOUR OWN FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "000000000000",
+      appId: "1:000000000000:web:0000000000000000"
+    };
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      window.FB = { db, ref, set, onValue, update, get, onDisconnect, remove };
+      window.FB_READY = true;
+    } catch (e) {
+      console.warn("Firebase failed:", e);
+      window.FB_READY = false;
+    }
+  </script>
 
   <script>
     // ============================================================
@@ -506,24 +533,24 @@
     let myProfile = JSON.parse(localStorage.getItem('mwc_profile') || 'null') || {
       name: "Player", country: "My Country", color: "#22c55e", number: 10
     };
-    let friendProfile = JSON.parse(localStorage.getItem('mwc_friend') || 'null') || {
-      name: "Friend", country: "Rivals", color: "#ef4444", number: 9
-    };
 
     const QUESTION_TIME = 20;
     let timeLeft = QUESTION_TIME;
     let timerInterval = null;
     const TIMER_CIRCUMFERENCE = 2 * Math.PI * 17;
 
-    const M = {
+    // Online 1v1 state
+    const O = {
       active: false,
-      turn: "me",
-      meGoals: 0,
-      friendGoals: 0,
-      seed: 0,
+      roomCode: null,
+      role: null, // "host" | "guest"
+      myGoals: 0,
+      oppGoals: 0,
+      oppName: "Friend",
+      seed: null,
       questionIndex: 0,
-      target: 10,
-      finished: false
+      finished: false,
+      unsub: null
     };
 
     const TOURNAMENT_LEVELS = [
@@ -553,29 +580,18 @@
     }
 
     // ============================================================
-    //  PROFILES
+    //  PROFILE
     // ============================================================
     function loadProfileInputs() {
       document.getElementById('myName').value = myProfile.name;
       document.getElementById('myCountryName').value = myProfile.country;
       document.getElementById('myCountryColor').value = myProfile.color;
       document.getElementById('myJerseyNumber').value = myProfile.number;
-
-      document.getElementById('friendName').value = friendProfile.name;
-      document.getElementById('friendCountryName').value = friendProfile.country;
-      document.getElementById('friendCountryColor').value = friendProfile.color;
-      document.getElementById('friendJerseyNumber').value = friendProfile.number;
-
       updateMyPreview();
-      updateFriendPreview();
     }
     function updateMyPreview() {
       document.getElementById('profilePreviewName').textContent = document.getElementById('myName').value || "Player";
       document.getElementById('profilePreviewNumber').textContent = document.getElementById('myJerseyNumber').value || "10";
-    }
-    function updateFriendPreview() {
-      document.getElementById('friendPreviewName').textContent = document.getElementById('friendName').value || "Friend";
-      document.getElementById('friendPreviewNumber').textContent = document.getElementById('friendJerseyNumber').value || "9";
     }
     function saveMyProfile() {
       const name = document.getElementById('myName').value.trim() || "Player";
@@ -588,21 +604,9 @@
       localStorage.setItem('mwc_profile', JSON.stringify(myProfile));
       updateMyPreview();
       renderLevelHub();
-      toast("Profile saved", event.target);
+      toast(event.target);
     }
-    function saveFriendProfile() {
-      const name = document.getElementById('friendName').value.trim() || "Friend";
-      const country = document.getElementById('friendCountryName').value.trim() || "Rivals";
-      const color = document.getElementById('friendCountryColor').value || "#ef4444";
-      let number = parseInt(document.getElementById('friendJerseyNumber').value, 10);
-      if (!number || number < 1) number = 9;
-      if (number > 99) number = 99;
-      friendProfile = { name, country, color, number };
-      localStorage.setItem('mwc_friend', JSON.stringify(friendProfile));
-      updateFriendPreview();
-      toast("Friend saved", event.target);
-    }
-    function toast(msg, btn) {
+    function toast(btn) {
       if (!btn) return;
       const old = btn.textContent;
       btn.textContent = "Saved ✓";
@@ -610,7 +614,7 @@
     }
 
     // ============================================================
-    //  HUB / LEVELS
+    //  HUB
     // ============================================================
     function renderLevelHub() {
       const grid = document.getElementById('levelGrid');
@@ -626,9 +630,7 @@
               <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">${lvl.name}</span>
               <span class="text-amber-400 text-xs">⭐ ${stars}/3</span>
             </div>
-            <div class="flex items-center gap-2 mb-1">
-              <h4 class="font-bold text-slate-100 text-sm">${lvl.desc}</h4>
-            </div>
+            <h4 class="font-bold text-slate-100 text-sm mb-1">${lvl.desc}</h4>
             <p class="text-xs text-slate-400">Practise solo</p>
           </div>
           <button class="mt-4 w-full bg-emerald-600/80 hover:bg-emerald-500 text-slate-950 text-xs font-bold py-2 rounded-lg transition">Practise</button>
@@ -637,21 +639,12 @@
       });
     }
 
-    function applyMyKit() {
-      const c = myProfile.color;
+    function applyKit(profile) {
+      const c = profile.color;
       document.getElementById('jerseyTop').setAttribute('stop-color', lighten(c, 40));
       document.getElementById('jerseyMid').setAttribute('stop-color', c);
       document.getElementById('jerseyBot').setAttribute('stop-color', darken(c, 40));
-      document.getElementById('jerseyNumber').textContent = myProfile.number;
-      document.getElementById('kickerWrapper').style.filter =
-        `drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px ${c}88)`;
-    }
-    function applyFriendKit() {
-      const c = friendProfile.color;
-      document.getElementById('jerseyTop').setAttribute('stop-color', lighten(c, 40));
-      document.getElementById('jerseyMid').setAttribute('stop-color', c);
-      document.getElementById('jerseyBot').setAttribute('stop-color', darken(c, 40));
-      document.getElementById('jerseyNumber').textContent = friendProfile.number;
+      document.getElementById('jerseyNumber').textContent = profile.number;
       document.getElementById('kickerWrapper').style.filter =
         `drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px ${c}88)`;
     }
@@ -660,7 +653,7 @@
     //  PRACTICE
     // ============================================================
     function startPractice(lvlId) {
-      M.active = false;
+      O.active = false;
       currentLevel = lvlId;
       goalsScored = 0;
       totalShots = 0;
@@ -675,65 +668,17 @@
       document.getElementById('goalLabel').textContent = "GOALS";
       document.getElementById('goalCounter').innerText = `0 / 10`;
       document.getElementById('qTurnLabel').textContent = "Solve to Shoot";
-      applyMyKit();
+      applyKit(myProfile);
       nextQuestion();
-    }
-
-    function openFriendProfileAndStart() {
-      document.getElementById('friendName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      startMatch();
-    }
-
-    // ============================================================
-    //  1v1 PENALTY MATCH (local hot-seat)
-    // ============================================================
-    function startMatch() {
-      M.active = true;
-      M.finished = false;
-      M.turn = "me";
-      M.meGoals = 0;
-      M.friendGoals = 0;
-      M.seed = Math.floor(Math.random() * 999999) + 1;
-      M.questionIndex = 0;
-      currentLevel = 1;
-      goalsScored = 0;
-      totalShots = 0;
-
-      document.getElementById('levelHub').classList.add('hidden');
-      document.getElementById('matchArena').classList.remove('hidden');
-      document.getElementById('matchArena').classList.add('flex');
-      document.getElementById('mpScoreStrip').classList.remove('hidden');
-      document.getElementById('mpYouName').textContent = myProfile.name;
-      document.getElementById('mpOppName').textContent = friendProfile.name;
-      document.getElementById('mpYouGoals').textContent = 0;
-      document.getElementById('mpOppGoals').textContent = 0;
-
-      document.getElementById('matchTitle').textContent = "Penalty Match";
-      document.getElementById('goalLabel').textContent = "GOALS";
-      updateMatchTurnUI();
-      nextQuestion();
-    }
-
-    function updateMatchTurnUI() {
-      const isMe = M.turn === "me";
-      const shooter = isMe ? myProfile : friendProfile;
-      document.getElementById('mpYouGoals').textContent = M.meGoals;
-      document.getElementById('mpOppGoals').textContent = M.friendGoals;
-      document.getElementById('mpTurnTag').textContent = isMe ? "Your turn" : `${friendProfile.name}'s turn`;
-      document.getElementById('qTurnLabel').textContent = isMe ? "Your turn — Solve to Shoot" : `${friendProfile.name}'s turn — Solve to Shoot`;
-      document.getElementById('matchSub').textContent = `${shooter.name} (${shooter.country}) shooting`;
-      document.getElementById('goalCounter').innerText = `You ${M.meGoals} – ${M.friendGoals} Friend`;
-
-      if (isMe) applyMyKit(); else applyFriendKit();
     }
 
     // ============================================================
     //  QA SKIP
     // ============================================================
     function qaSkipStage() {
-      if (M.active) { alert("QA Skip is disabled in penalty matches."); return; }
+      if (O.active) { alert("QA Skip is disabled in online matches."); return; }
       stopTimer();
-      alert(`⚡ QA Skip Triggered! Level ${currentLevel} completed instantly.`);
+      alert(`⚡ QA Skip Triggered! Level ${currentLevel} completed.`);
       userLevelStars[currentLevel] = 3;
       localStorage.setItem('mwc_stars', JSON.stringify(userLevelStars));
       document.getElementById('matchArena').classList.add('hidden');
@@ -754,9 +699,7 @@
         if (timeLeft <= 0) { stopTimer(); handleTimeout(); }
       }, 1000);
     }
-    function stopTimer() {
-      if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    }
+    function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
     function updateTimerDisplay() {
       const ring = document.getElementById('timerRing');
       const text = document.getElementById('timerText');
@@ -820,7 +763,7 @@
     }
 
     // ============================================================
-    //  RESET ACTORS
+    //  RESET
     // ============================================================
     function resetActors() {
       const ball = document.getElementById('soccerBall');
@@ -845,8 +788,8 @@
 
       const lvl = TOURNAMENT_LEVELS.find(l => l.id === currentLevel) || TOURNAMENT_LEVELS[0];
 
-      if (M.active) {
-        currentQuestion = generateSeededQuestion(lvl.type, M.seed, M.questionIndex);
+      if (O.active) {
+        currentQuestion = generateSeededQuestion(lvl.type, O.seed, O.questionIndex);
       } else {
         currentQuestion = generateQuestionByType(lvl.type);
       }
@@ -867,7 +810,7 @@
     }
 
     // ============================================================
-    //  SHARED (seeded) QUESTION GENERATION
+    //  SEEDED QUESTIONS
     // ============================================================
     function mulberry32(seed) {
       return function() {
@@ -990,55 +933,53 @@
     //  AFTER SHOT
     // ============================================================
     function afterShot(isCorrect) {
-      if (M.active) {
+      if (O.active) {
         if (isCorrect) {
-          if (M.turn === "me") M.meGoals++; else M.friendGoals++;
+          O.myGoals++;
+          pushOnlineScore();
         }
-        updateMatchTurnUI();
-
-        if (M.meGoals >= M.target || M.friendGoals >= M.target) {
-          endMatch();
-          return;
-        }
-
-        M.turn = (M.turn === "me") ? "friend" : "me";
-        M.questionIndex++;
-        updateMatchTurnUI();
-        nextQuestion();
-      } else {
-        if (isCorrect) {
-          goalsScored++;
-          document.getElementById('goalCounter').innerText = `${goalsScored} / 10`;
-        }
-        if (goalsScored >= 10) {
-          alert(`🏆 Practice Complete! ${myProfile.name}, you scored 10 goals!`);
-          userLevelStars[currentLevel] = 3;
-          localStorage.setItem('mwc_stars', JSON.stringify(userLevelStars));
-          document.getElementById('matchArena').classList.add('hidden');
-          document.getElementById('levelHub').classList.remove('hidden');
-          renderLevelHub();
-          return;
+        updateOnlineScoreboard();
+        if (O.myGoals >= 10 || O.oppGoals >= 10) { endMatch(); return; }
+        if (O.role === "host") {
+          O.questionIndex++;
+          pushOnlineIndex();
         }
         nextQuestion();
+        return;
       }
+
+      // Practice
+      if (isCorrect) {
+        goalsScored++;
+        document.getElementById('goalCounter').innerText = `${goalsScored} / 10`;
+      }
+      if (goalsScored >= 10) {
+        alert(`🏆 Practice Complete! ${myProfile.name}, you scored 10 goals!`);
+        userLevelStars[currentLevel] = 3;
+        localStorage.setItem('mwc_stars', JSON.stringify(userLevelStars));
+        document.getElementById('matchArena').classList.add('hidden');
+        document.getElementById('levelHub').classList.remove('hidden');
+        renderLevelHub();
+        return;
+      }
+      nextQuestion();
     }
 
     // ============================================================
     //  MATCH END
     // ============================================================
     function endMatch() {
-      M.finished = true;
+      if (!O.active) return;
+      if (O.finished) return;
+      O.finished = true;
       stopTimer();
-      const meWon = M.meGoals > M.friendGoals;
-      const tie = M.meGoals === M.friendGoals;
-      document.getElementById('goTitle').textContent = tie ? "Draw!" : (meWon ? "You Win! 🏆" : "You Lost");
-      document.getElementById('goTitle').className = tie
-        ? "text-2xl font-black text-amber-300"
-        : (meWon ? "text-2xl font-black text-emerald-300" : "text-2xl font-black text-rose-300");
-      document.getElementById('goScore').textContent = `${M.meGoals} – ${M.friendGoals}`;
+      const won = O.myGoals > O.oppGoals;
+      const tie = O.myGoals === O.oppGoals;
+      document.getElementById('goTitle').textContent = tie ? "Draw!" : (won ? "You Win! 🏆" : "You Lost");
+      document.getElementById('goScore').textContent = `${O.myGoals} – ${O.oppGoals}`;
       document.getElementById('goSub').textContent = tie
-        ? "What a match! Both players scored the same."
-        : `${meWon ? myProfile.name : friendProfile.name} won the penalty match.`;
+        ? "Both players scored the same."
+        : `${won ? myProfile.name : O.oppName} won the online match.`;
       document.getElementById('gameOverModal').classList.remove('hidden');
     }
 
@@ -1046,14 +987,181 @@
       document.getElementById('gameOverModal').classList.add('hidden');
       document.getElementById('matchArena').classList.add('hidden');
       document.getElementById('levelHub').classList.remove('hidden');
-      M.active = false;
-      M.finished = false;
-      M.turn = "me";
-      M.meGoals = 0;
-      M.friendGoals = 0;
-      M.questionIndex = 0;
+      if (O.unsub) { O.unsub(); O.unsub = null; }
+      O.active = false; O.finished = false; O.roomCode = null; O.role = null; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
       document.getElementById('mpScoreStrip').classList.add('hidden');
       renderLevelHub();
+    }
+
+    // ============================================================
+    //  ONLINE MULTIPLAYER
+    // ============================================================
+    function fbOk() { return window.FB_READY && window.FB; }
+    function randCode() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let s = "";
+      for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+      return s;
+    }
+    function openOnlineModal() { document.getElementById('onlineModal').classList.remove('hidden'); }
+    function closeOnlineModal() { document.getElementById('onlineModal').classList.add('hidden'); }
+    function setOnlineStatus(msg) { document.getElementById('onlineStatus').textContent = msg || ""; }
+
+    async function createOnlineRoom() {
+      if (!fbOk()) { setOnlineStatus("Multiplayer needs Firebase config. See the file header."); return; }
+      const code = randCode();
+      O.roomCode = code; O.role = "host"; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.seed = Math.floor(Math.random() * 999999) + 1;
+
+      const { db, ref, set, onDisconnect } = window.FB;
+      await set(ref(db, "rooms/" + code), {
+        host: { name: myProfile.name, goals: 0, number: myProfile.number, country: myProfile.country },
+        guest: null,
+        seed: O.seed,
+        questionIndex: 0,
+        started: false
+      });
+      onDisconnect(ref(db, "rooms/" + code)).remove();
+
+      document.getElementById('onlineSetup').classList.add('hidden');
+      document.getElementById('onlineRoom').classList.remove('hidden');
+      document.getElementById('onlineRoomCode').textContent = code;
+      document.getElementById('onlineYouName').textContent = myProfile.name;
+      document.getElementById('onlineFriendName').textContent = "Waiting…";
+      document.getElementById('onlineStateText').textContent = "Waiting for a friend to join…";
+      document.getElementById('onlineStartBtn').disabled = true;
+      document.getElementById('onlineStartBtn').classList.remove('hidden');
+      document.getElementById('onlineWaitHost').classList.add('hidden');
+
+      listenRoom();
+    }
+
+    async function joinOnlineRoom() {
+      if (!fbOk()) { setOnlineStatus("Multiplayer needs Firebase config. See the file header."); return; }
+      const code = (document.getElementById('onlineCodeInput').value || "").trim().toUpperCase();
+      if (code.length !== 4) { setOnlineStatus("Enter a 4-letter code."); return; }
+
+      const { db, ref, set, get } = window.FB;
+      const snap = await get(ref(db, "rooms/" + code));
+      if (!snap.exists()) { setOnlineStatus("Room not found."); return; }
+      const data = snap.val();
+      if (data.guest) { setOnlineStatus("Room is full."); return; }
+
+      O.roomCode = code; O.role = "guest"; O.myGoals = 0; O.oppGoals = 0;
+      O.seed = data.seed; O.questionIndex = data.questionIndex || 0;
+      O.oppName = (data.host && data.host.name) || "Host";
+
+      await set(ref(db, `rooms/${code}/guest`), {
+        name: myProfile.name, goals: 0, number: myProfile.number, country: myProfile.country
+      });
+
+      document.getElementById('onlineSetup').classList.add('hidden');
+      document.getElementById('onlineRoom').classList.remove('hidden');
+      document.getElementById('onlineRoomCode').textContent = code;
+      document.getElementById('onlineYouName').textContent = myProfile.name;
+      document.getElementById('onlineFriendName').textContent = O.oppName;
+      document.getElementById('onlineStateText').textContent = "Waiting for host to start…";
+      document.getElementById('onlineStartBtn').classList.add('hidden');
+      document.getElementById('onlineWaitHost').classList.remove('hidden');
+
+      listenRoom();
+    }
+
+    function listenRoom() {
+      if (!fbOk() || !O.roomCode) return;
+      if (O.unsub) O.unsub();
+      const { db, ref, onValue } = window.FB;
+      const unsub = onValue(ref(db, "rooms/" + O.roomCode), snap => {
+        const d = snap.val();
+        if (!d) return;
+
+        if (O.role === "host") {
+          if (d.guest) {
+            document.getElementById('onlineFriendName').textContent = d.guest.name || "Friend";
+            document.getElementById('onlineStateText').textContent = "Friend joined! Tap Start Match.";
+            document.getElementById('onlineStartBtn').disabled = false;
+          }
+          if (d.started) {
+            O.oppGoals = (d.guest && d.guest.goals) || 0;
+            O.oppName = (d.guest && d.guest.name) || "Friend";
+            updateOnlineScoreboard();
+            if (O.myGoals >= 10 || O.oppGoals >= 10) endMatch();
+          }
+        } else {
+          if (d.started && !O.active) {
+            O.active = true;
+            O.seed = d.seed;
+            O.questionIndex = d.questionIndex || 0;
+            O.oppGoals = (d.host && d.host.goals) || 0;
+            O.oppName = (d.host && d.host.name) || "Host";
+            O.myGoals = (d.guest && d.guest.goals) || 0;
+            closeOnlineModal();
+            enterOnlineArena();
+          }
+          if (d.started && O.active) {
+            O.oppGoals = (d.host && d.host.goals) || 0;
+            if (d.guest) O.myGoals = d.guest.goals || O.myGoals;
+            updateOnlineScoreboard();
+            if (d.questionIndex !== undefined && d.questionIndex !== O.questionIndex && !isProcessingShot) {
+              O.questionIndex = d.questionIndex;
+              nextQuestion();
+            }
+            if (O.myGoals >= 10 || O.oppGoals >= 10) endMatch();
+          }
+        }
+      });
+      O.unsub = () => unsub();
+    }
+
+    async function hostStartOnlineMatch() {
+      if (!fbOk() || !O.roomCode) return;
+      const { db, ref, update } = window.FB;
+      O.active = true; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      await update(ref(db, "rooms/" + O.roomCode), { started: true, seed: O.seed, questionIndex: 0 });
+      closeOnlineModal();
+      enterOnlineArena();
+    }
+
+    async function pushOnlineScore() {
+      if (!fbOk() || !O.roomCode) return;
+      const { db, ref, update } = window.FB;
+      const slot = O.role === "host" ? "host" : "guest";
+      await update(ref(db, `rooms/${O.roomCode}/${slot}`), { goals: O.myGoals });
+    }
+    async function pushOnlineIndex() {
+      if (!fbOk() || !O.roomCode) return;
+      const { db, ref, update } = window.FB;
+      await update(ref(db, "rooms/" + O.roomCode), { questionIndex: O.questionIndex });
+    }
+
+    function enterOnlineArena() {
+      currentLevel = 1; goalsScored = 0; totalShots = 0;
+      document.getElementById('levelHub').classList.add('hidden');
+      document.getElementById('matchArena').classList.remove('hidden');
+      document.getElementById('matchArena').classList.add('flex');
+      document.getElementById('mpScoreStrip').classList.remove('hidden');
+      document.getElementById('mpYouName').textContent = myProfile.name;
+      document.getElementById('mpOppName').textContent = O.oppName;
+      document.getElementById('mpTurnTag').textContent = "Online match — race to 10!";
+      document.getElementById('matchTitle').textContent = "Online 1v1 Match";
+      document.getElementById('matchSub').textContent = `${myProfile.name} vs ${O.oppName}`;
+      document.getElementById('goalLabel').textContent = "GOALS";
+      document.getElementById('qTurnLabel').textContent = "Solve to Shoot";
+      applyKit(myProfile);
+      updateOnlineScoreboard();
+      nextQuestion();
+    }
+
+    function updateOnlineScoreboard() {
+      document.getElementById('mpYouGoals').textContent = O.myGoals;
+      document.getElementById('mpOppGoals').textContent = O.oppGoals;
+      document.getElementById('goalCounter').innerText = `You ${O.myGoals} / 10`;
+    }
+
+    function copyOnlineCode() {
+      const code = document.getElementById('onlineRoomCode').textContent;
+      if (navigator.clipboard) navigator.clipboard.writeText(code);
+      setOnlineStatus("Code copied!");
     }
 
     // ============================================================
@@ -1065,7 +1173,6 @@
 
     document.addEventListener('input', (e) => {
       if (e.target.id === 'myName' || e.target.id === 'myJerseyNumber') updateMyPreview();
-      if (e.target.id === 'friendName' || e.target.id === 'friendJerseyNumber') updateFriendPreview();
     });
 
     window.onload = function() {
