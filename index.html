@@ -9,139 +9,41 @@
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     .stadium-bg { background: radial-gradient(circle at 50% 30%, #0a1a2f 0%, #0b1f33 40%, #030b14 100%); }
-    .pitch-grass {
-      background: linear-gradient(180deg, #1a7a3c 0%, #0f5a2a 40%, #0a3d1e 100%);
-      box-shadow: inset 0 0 30px rgba(0,0,0,0.7), inset 0 0 10px #00000055;
-      position: relative; border-radius: 20px;
-    }
-    .pitch-grass::before {
-      content: ""; position: absolute; inset: 0;
-      background-image:
-        repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 40px),
-        repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 40px);
-      border-radius: 20px; pointer-events: none;
-    }
-    .goal-net-3d {
-      background:
-        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25) 0%, transparent 30%),
-        repeating-linear-gradient(45deg, #ffffff30 0px, #ffffff30 1px, transparent 1px, transparent 8px),
-        repeating-linear-gradient(-45deg, #ffffff20 0px, #ffffff20 1px, transparent 1px, transparent 8px),
-        linear-gradient(180deg, #2a3f55 0%, #0f1a24 100%);
-      background-blend-mode: overlay, normal, normal, normal;
-      box-shadow: inset 0 0 50px #000000aa, 0 10px 20px -5px black;
-      border-radius: 8px 8px 0 0;
-      border-left: 3px solid #cfd8e0; border-right: 3px solid #cfd8e0; border-top: 6px solid #e8edf2;
-      position: relative;
-    }
-    .goal-net-mesh {
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(to right, #ffffff40 1px, transparent 1px),
-        linear-gradient(to bottom, #ffffff40 1px, transparent 1px);
-      background-size: 12px 12px; opacity: 0.55; mix-blend-mode: overlay;
-      pointer-events: none; border-radius: 6px 6px 0 0;
-    }
-    .goal-frame-3d {
-      border-top: 6px solid #eef2f6; border-left: 8px solid #cfd8e3; border-right: 8px solid #cfd8e3;
-      border-radius: 12px 12px 0 0;
-      box-shadow: 0 -10px 20px -5px #000000aa, inset 0 10px 15px -5px #ffffff33;
-      position: relative;
-    }
-    .ball-3d {
-      width: 28px; height: 28px; font-size: 26px; line-height: 28px; text-align: center;
-      filter: drop-shadow(0 5px 4px rgba(0,0,0,0.7)) drop-shadow(0 0 10px rgba(255,255,220,0.5));
-      transition: transform 0.2s ease-out, filter 0.2s;
-      text-shadow: 0 0 8px white, 0 0 16px rgba(255,255,200,0.6);
-    }
+    .pitch-grass { background: linear-gradient(180deg, #1a7a3c 0%, #0f5a2a 40%, #0a3d1e 100%); box-shadow: inset 0 0 30px rgba(0,0,0,0.7), inset 0 0 10px #00000055; position: relative; border-radius: 20px; }
+    .pitch-grass::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 40px), repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 40px); border-radius: 20px; pointer-events: none; }
+    .goal-net-3d { background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25) 0%, transparent 30%), repeating-linear-gradient(45deg, #ffffff30 0px, #ffffff30 1px, transparent 1px, transparent 8px), repeating-linear-gradient(-45deg, #ffffff20 0px, #ffffff20 1px, transparent 1px, transparent 8px), linear-gradient(180deg, #2a3f55 0%, #0f1a24 100%); background-blend-mode: overlay, normal, normal, normal; box-shadow: inset 0 0 50px #000000aa, 0 10px 20px -5px black; border-radius: 8px 8px 0 0; border-left: 3px solid #cfd8e0; border-right: 3px solid #cfd8e0; border-top: 6px solid #e8edf2; position: relative; }
+    .goal-net-mesh { position: absolute; inset: 0; background-image: linear-gradient(to right, #ffffff40 1px, transparent 1px), linear-gradient(to bottom, #ffffff40 1px, transparent 1px); background-size: 12px 12px; opacity: 0.55; mix-blend-mode: overlay; pointer-events: none; border-radius: 6px 6px 0 0; }
+    .goal-frame-3d { border-top: 6px solid #eef2f6; border-left: 8px solid #cfd8e3; border-right: 8px solid #cfd8e3; border-radius: 12px 12px 0 0; box-shadow: 0 -10px 20px -5px #000000aa, inset 0 10px 15px -5px #ffffff33; position: relative; }
+    .ball-3d { width: 28px; height: 28px; font-size: 26px; line-height: 28px; text-align: center; filter: drop-shadow(0 5px 4px rgba(0,0,0,0.7)) drop-shadow(0 0 10px rgba(255,255,220,0.5)); transition: transform 0.2s ease-out, filter 0.2s; text-shadow: 0 0 8px white, 0 0 16px rgba(255,255,200,0.6); }
     .target-corner { filter: drop-shadow(0 0 12px #fbbf24); transition: all 0.2s; }
     .penalty-spot-glow { box-shadow: 0 0 40px 10px rgba(255,255,180,0.4), 0 0 80px 20px rgba(255,255,200,0.1); border-radius: 50%; }
-
     .timer-ring { transition: stroke-dashoffset 1s linear, stroke 0.3s; }
     @keyframes timerPulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.12);} }
     .timer-danger { animation: timerPulse 0.6s ease-in-out infinite; }
-
-    @keyframes netBulgeReal {
-      0% { transform: scale(1); filter: brightness(1); }
-      40% { transform: scale(1.08) translateY(-8px); filter: brightness(1.4); }
-      70% { transform: scale(1.02) translateY(-2px); filter: brightness(1.2); }
-      100% { transform: scale(1); filter: brightness(1); }
-    }
+    @keyframes netBulgeReal { 0% { transform: scale(1); filter: brightness(1); } 40% { transform: scale(1.08) translateY(-8px); filter: brightness(1.4); } 70% { transform: scale(1.02) translateY(-2px); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
     .animate-net-bulge { animation: netBulgeReal 0.6s cubic-bezier(0.2, 0.9, 0.4, 1); }
-
-    @keyframes kickTopLeftReal {
-      0% { transform: scale(1) translate(0, 0); opacity: 1; }
-      30% { transform: scale(0.85) translate(-60px, -80px); opacity: 1; }
-      70% { transform: scale(0.55) translate(-190px, -200px); opacity: 1; }
-      100% { transform: scale(0.3) translate(-280px, -260px); opacity: 0.9; }
-    }
-    @keyframes kickTopRightReal {
-      0% { transform: scale(1) translate(0, 0); opacity: 1; }
-      30% { transform: scale(0.85) translate(60px, -80px); opacity: 1; }
-      70% { transform: scale(0.55) translate(190px, -200px); opacity: 1; }
-      100% { transform: scale(0.3) translate(280px, -260px); opacity: 0.9; }
-    }
+    @keyframes kickTopLeftReal { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 30% { transform: scale(0.85) translate(-60px, -80px); opacity: 1; } 70% { transform: scale(0.55) translate(-190px, -200px); opacity: 1; } 100% { transform: scale(0.3) translate(-280px, -260px); opacity: 0.9; } }
+    @keyframes kickTopRightReal { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 30% { transform: scale(0.85) translate(60px, -80px); opacity: 1; } 70% { transform: scale(0.55) translate(190px, -200px); opacity: 1; } 100% { transform: scale(0.3) translate(280px, -260px); opacity: 0.9; } }
     .animate-kick-top-left-real { animation: kickTopLeftReal 0.65s cubic-bezier(0.2, 0.8, 0.4, 1) forwards; }
     .animate-kick-top-right-real { animation: kickTopRightReal 0.65s cubic-bezier(0.2, 0.8, 0.4, 1) forwards; }
-
-    @keyframes ballCaughtLeft {
-      0%   { transform: scale(1) translate(0, 0); opacity: 1; }
-      55%  { transform: scale(0.8) translate(-110px, -130px); opacity: 1; }
-      100% { transform: scale(0.55) translate(-158px, -168px) rotate(-12deg); opacity: 1; }
-    }
-    @keyframes ballCaughtRight {
-      0%   { transform: scale(1) translate(0, 0); opacity: 1; }
-      55%  { transform: scale(0.8) translate(110px, -130px); opacity: 1; }
-      100% { transform: scale(0.55) translate(158px, -168px) rotate(12deg); opacity: 1; }
-    }
-    .animate-ball-caught-left  { animation: ballCaughtLeft 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
+    @keyframes ballCaughtLeft { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 55% { transform: scale(0.8) translate(-110px, -130px); opacity: 1; } 100% { transform: scale(0.55) translate(-158px, -168px) rotate(-12deg); opacity: 1; } }
+    @keyframes ballCaughtRight { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 55% { transform: scale(0.8) translate(110px, -130px); opacity: 1; } 100% { transform: scale(0.55) translate(158px, -168px) rotate(12deg); opacity: 1; } }
+    .animate-ball-caught-left { animation: ballCaughtLeft 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
     .animate-ball-caught-right { animation: ballCaughtRight 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
-
-    @keyframes diveLeftReal {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      25% { transform: translate(-50px, -20px) rotate(-20deg) scale(1.05); }
-      60% { transform: translate(-150px, 20px) rotate(-55deg) scale(1.1); }
-      100% { transform: translate(-185px, 30px) rotate(-75deg) scale(1.05); }
-    }
-    @keyframes diveRightReal {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      25% { transform: translate(50px, -20px) rotate(20deg) scale(1.05); }
-      60% { transform: translate(150px, 20px) rotate(55deg) scale(1.1); }
-      100% { transform: translate(185px, 30px) rotate(75deg) scale(1.05); }
-    }
-    .animate-dive-left  { animation: diveLeftReal 0.5s ease-out forwards; }
+    @keyframes diveLeftReal { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 25% { transform: translate(-50px, -20px) rotate(-20deg) scale(1.05); } 60% { transform: translate(-150px, 20px) rotate(-55deg) scale(1.1); } 100% { transform: translate(-185px, 30px) rotate(-75deg) scale(1.05); } }
+    @keyframes diveRightReal { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 25% { transform: translate(50px, -20px) rotate(20deg) scale(1.05); } 60% { transform: translate(150px, 20px) rotate(55deg) scale(1.1); } 100% { transform: translate(185px, 30px) rotate(75deg) scale(1.05); } }
+    .animate-dive-left { animation: diveLeftReal 0.5s ease-out forwards; }
     .animate-dive-right { animation: diveRightReal 0.5s ease-out forwards; }
-
-    @keyframes catchPoseLeft {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      100% { transform: translate(-150px, 25px) rotate(-70deg) scale(1.05); }
-    }
-    @keyframes catchPoseRight {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      100% { transform: translate(150px, 25px) rotate(70deg) scale(1.05); }
-    }
-    .animate-catch-left  { animation: catchPoseLeft 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
+    @keyframes catchPoseLeft { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 100% { transform: translate(-150px, 25px) rotate(-70deg) scale(1.05); } }
+    @keyframes catchPoseRight { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 100% { transform: translate(150px, 25px) rotate(70deg) scale(1.05); } }
+    .animate-catch-left { animation: catchPoseLeft 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
     .animate-catch-right { animation: catchPoseRight 0.55s cubic-bezier(0.15, 0.85, 0.35, 1) forwards; }
-
-    @keyframes kickerRunUp {
-      0% { transform: translate(0, 0) scale(1); }
-      40% { transform: translate(-6px, -4px) scale(1.03); }
-      70% { transform: translate(4px, -6px) scale(1.04); }
-      100% { transform: translate(0, 0) scale(1); }
-    }
-    @keyframes kickerSwing {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      30% { transform: translate(2px, -2px) rotate(8deg) scale(1.02); }
-      60% { transform: translate(-2px, 2px) rotate(-14deg) scale(1.03); }
-      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-    }
-    @keyframes kickerFollowThrough {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-      100% { transform: translate(4px, -2px) rotate(16deg) scale(1.05); }
-    }
+    @keyframes kickerRunUp { 0% { transform: translate(0, 0) scale(1); } 40% { transform: translate(-6px, -4px) scale(1.03); } 70% { transform: translate(4px, -6px) scale(1.04); } 100% { transform: translate(0, 0) scale(1); } }
+    @keyframes kickerSwing { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 30% { transform: translate(2px, -2px) rotate(8deg) scale(1.02); } 60% { transform: translate(-2px, 2px) rotate(-14deg) scale(1.03); } 100% { transform: translate(0, 0) rotate(0deg) scale(1); } }
+    @keyframes kickerFollowThrough { 0% { transform: translate(0, 0) rotate(0deg) scale(1); } 100% { transform: translate(4px, -2px) rotate(16deg) scale(1.05); } }
     .animate-kicker-runup { animation: kickerRunUp 0.35s ease-in-out; }
     .animate-kicker-swing { animation: kickerSwing 0.4s ease-in-out; }
     .animate-kicker-follow { animation: kickerFollowThrough 0.5s ease-out forwards; }
-
     @media (max-width: 640px) {
       .goal-container { width: 100% !important; height: 150px !important; }
       .ball-3d { width: 22px; height: 22px; font-size: 20px; line-height: 22px; }
@@ -161,17 +63,11 @@
           <p class="text-xs text-slate-400">Practice &amp; Online Penalty Matches</p>
         </div>
       </div>
-      <button onclick="openTutorial()" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition">
-        <i class="fas fa-question-circle text-amber-400"></i> How to Play
-      </button>
     </div>
   </header>
 
   <main class="max-w-4xl mx-auto w-full p-4 flex-grow flex flex-col justify-center">
-
     <div id="levelHub" class="space-y-6">
-
-      <!-- MODE CARDS -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-slate-800/90 border border-emerald-500/40 rounded-2xl p-6 shadow-2xl backdrop-blur">
           <div class="flex items-center gap-3 mb-3">
@@ -181,12 +77,11 @@
               <p class="text-xs text-slate-400">Solo drills vs the keeper</p>
             </div>
           </div>
-          <p class="text-sm text-slate-300 mb-4">Pick a level and score 10 goals to finish.</p>
-          <button onclick="startPractice(1)" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-lg py-3 px-6 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
+          <p class="text-sm text-slate-300 mb-4">Levels unlock one by one. Complete a level to unlock the next.</p>
+          <button onclick="startNextPractice()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-lg py-3 px-6 rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
             <i class="fas fa-futbol"></i> START PRACTICE
           </button>
         </div>
-
         <div class="bg-slate-800/90 border border-purple-500/40 rounded-2xl p-6 shadow-2xl backdrop-blur">
           <div class="flex items-center gap-3 mb-3">
             <span class="text-3xl">🌐</span>
@@ -202,7 +97,6 @@
         </div>
       </div>
 
-      <!-- MY PROFILE -->
       <div class="bg-slate-900/70 border border-amber-500/30 rounded-xl p-4 text-left">
         <div class="flex items-center justify-between mb-3">
           <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2"><i class="fas fa-user"></i> My Player Profile</h3>
@@ -214,34 +108,40 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div class="flex items-center gap-2">
             <label class="text-xs text-slate-400 w-20">Name</label>
-            <input id="myName" type="text" maxlength="20" placeholder="Your name"
-                   class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="Player">
+            <input id="myName" type="text" maxlength="20" placeholder="Your name" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="Player">
           </div>
           <div class="flex items-center gap-2">
             <label class="text-xs text-slate-400 w-20">Country</label>
-            <input id="myCountryName" type="text" maxlength="20" placeholder="Country"
-                   class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="My Country">
+            <input id="myCountryName" type="text" maxlength="20" placeholder="Country" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="My Country">
           </div>
           <div class="flex items-center gap-2">
             <label class="text-xs text-slate-400 w-20">Jersey</label>
             <input id="myCountryColor" type="color" value="#22c55e" class="w-14 h-9 rounded border border-slate-600 bg-slate-800 cursor-pointer">
-            <input id="myJerseyNumber" type="number" min="1" max="99" placeholder="10"
-                   class="w-20 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="10">
+            <input id="myJerseyNumber" type="number" min="1" max="99" placeholder="10" class="w-20 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400" value="10">
             <button onclick="saveMyProfile()" class="ml-auto bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition">Save</button>
           </div>
         </div>
       </div>
 
-      <!-- PRACTICE LEVELS -->
+      <!-- PROGRESS HEADER -->
       <div>
-        <h3 class="text-sm font-bold text-emerald-300 mb-2 flex items-center gap-2"><i class="fas fa-list"></i> Practice Levels</h3>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold text-emerald-300 flex items-center gap-2"><i class="fas fa-list"></i> Practice Levels</h3>
+          <div class="flex items-center gap-2">
+            <span id="progressText" class="text-xs font-bold text-slate-300">0 / 7 completed</span>
+            <button onclick="resetProgress()" class="text-[11px] bg-slate-700 hover:bg-rose-600 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg transition font-semibold">
+              <i class="fas fa-undo mr-1"></i> Reset
+            </button>
+          </div>
+        </div>
+        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
+          <div id="progressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500" style="width: 0%"></div>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="levelGrid"></div>
       </div>
     </div>
 
-    <!-- MATCH ARENA -->
     <div id="matchArena" class="hidden flex-col items-center justify-center space-y-4">
-
       <div class="w-full bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 shadow-xl flex justify-between items-center">
         <div class="flex items-center gap-3">
           <span class="text-2xl" id="stageFlag">⚽</span>
@@ -261,11 +161,10 @@
         </div>
       </div>
 
-      <!-- ONLINE SCORE STRIP — shows my name vs friend's name -->
       <div id="mpScoreStrip" class="hidden w-full bg-slate-900/80 border border-purple-500/40 rounded-2xl p-3 shadow-xl">
         <div class="flex items-center justify-between text-xs gap-2">
           <div class="text-center flex-1 min-w-0">
-            <div id="mpYouLabel" class="text-slate-400 mb-0.5 truncate">Player</div>
+            <div id="mpYouLabel" class="text-slate-400 mb-0.5 truncate">You</div>
             <div id="mpYouName" class="font-bold text-emerald-300 truncate">Player</div>
             <div id="mpYouGoals" class="text-2xl font-black text-emerald-400">0</div>
           </div>
@@ -280,7 +179,6 @@
       </div>
 
       <div class="relative w-full h-96 pitch-grass rounded-3xl border-4 border-slate-600/60 overflow-hidden shadow-2xl flex flex-col justify-between items-center p-4">
-
         <div id="commentaryBanner" class="z-20 bg-slate-900/90 border border-slate-700 px-6 py-1.5 rounded-full text-xs font-bold text-amber-300 transition-all duration-300 opacity-0 transform -translate-y-2 backdrop-blur-sm">
           Aim for the top corner!
         </div>
@@ -293,32 +191,19 @@
           <div class="absolute top-3 left-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
           <div class="absolute top-3 right-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
 
-          <!-- KEEPER — jersey number REMOVED -->
           <div id="keeperWrapper" class="absolute bottom-0 z-30 transition-all duration-300" style="transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(255,215,0,0.3));">
             <svg id="keeperSVG" width="100" height="125" viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <radialGradient id="stickGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#fde68a" stop-opacity="0.6"/><stop offset="100%" stop-color="#fde68a" stop-opacity="0"/>
-                </radialGradient>
-                <linearGradient id="keeperJersey" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#22c55e"/><stop offset="55%" stop-color="#16a34a"/><stop offset="100%" stop-color="#0f5a2a"/>
-                </linearGradient>
-                <linearGradient id="keeperJerseyShine" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="keeperShorts" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/>
-                </linearGradient>
+                <radialGradient id="stickGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fde68a" stop-opacity="0.6"/><stop offset="100%" stop-color="#fde68a" stop-opacity="0"/></radialGradient>
+                <linearGradient id="keeperJersey" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#22c55e"/><stop offset="55%" stop-color="#16a34a"/><stop offset="100%" stop-color="#0f5a2a"/></linearGradient>
+                <linearGradient id="keeperJerseyShine" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="45%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+                <linearGradient id="keeperShorts" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
               </defs>
               <ellipse cx="50" cy="65" rx="42" ry="55" fill="url(#stickGlow)"/>
               <ellipse cx="50" cy="122" rx="24" ry="4" fill="#000" opacity="0.35"/>
               <g stroke-linecap="round" fill="none">
-                <g stroke="#0a0a0a" stroke-width="9">
-                  <line x1="50" y1="88" x2="38" y2="118"/><line x1="50" y1="88" x2="62" y2="118"/>
-                </g>
-                <g stroke="#f8fafc" stroke-width="5">
-                  <line x1="50" y1="88" x2="38" y2="118"/><line x1="50" y1="88" x2="62" y2="118"/>
-                </g>
+                <g stroke="#0a0a0a" stroke-width="9"><line x1="50" y1="88" x2="38" y2="118"/><line x1="50" y1="88" x2="62" y2="118"/></g>
+                <g stroke="#f8fafc" stroke-width="5"><line x1="50" y1="88" x2="38" y2="118"/><line x1="50" y1="88" x2="62" y2="118"/></g>
               </g>
               <path d="M34 116 L42 116 L40 122 L32 122 Z" fill="#111827"/>
               <path d="M58 116 L66 116 L68 122 L60 122 Z" fill="#111827"/>
@@ -326,18 +211,12 @@
               <rect x="58" y="120" width="10" height="2" rx="1" fill="#f59e0b"/>
               <path d="M33 76 L67 76 L69 90 Q69 93 66 93 L58 93 L56 84 L44 84 L42 93 L34 93 Q31 93 31 90 Z" fill="url(#keeperShorts)" stroke="#0a0a0a" stroke-width="1.5"/>
               <line x1="50" y1="78" x2="50" y2="87" stroke="#334155" stroke-width="1.5"/>
-              <path d="M28 52 Q28 44 36 42 L64 42 Q72 44 72 52 L73 78 Q73 82 69 82 L31 82 Q27 82 27 78 Z"
-                    fill="url(#keeperJersey)" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M28 52 Q28 44 36 42 L64 42 Q72 44 72 52 L73 78 Q73 82 69 82 L31 82 Q27 82 27 78 Z" fill="url(#keeperJersey)" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
               <path d="M29 54 L29 76 Q29 79 32 79 L38 79 L38 54 Z" fill="url(#keeperJerseyShine)"/>
               <path d="M40 42 Q50 49 60 42" fill="none" stroke="#dcfce7" stroke-width="2.5" stroke-linecap="round"/>
-              <!-- Jersey number removed — no <text> element here -->
               <g stroke-linecap="round" fill="none">
-                <g stroke="#0a0a0a" stroke-width="9">
-                  <line x1="27" y1="58" x2="14" y2="42"/><line x1="73" y1="58" x2="86" y2="42"/>
-                </g>
-                <g stroke="#f8fafc" stroke-width="5">
-                  <line x1="27" y1="58" x2="14" y2="42"/><line x1="73" y1="58" x2="86" y2="42"/>
-                </g>
+                <g stroke="#0a0a0a" stroke-width="9"><line x1="27" y1="58" x2="14" y2="42"/><line x1="73" y1="58" x2="86" y2="42"/></g>
+                <g stroke="#f8fafc" stroke-width="5"><line x1="27" y1="58" x2="14" y2="42"/><line x1="73" y1="58" x2="86" y2="42"/></g>
               </g>
               <circle cx="13" cy="38" r="8" fill="#facc15" stroke="#92400e" stroke-width="2"/>
               <circle cx="87" cy="38" r="8" fill="#facc15" stroke="#92400e" stroke-width="2"/>
@@ -355,26 +234,14 @@
           <div id="kickerWrapper" class="absolute z-40 transition-all duration-300" style="left: calc(50% - 92px); bottom: -4px; transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(56,189,248,0.4));">
             <svg id="kickerSVG" width="80" height="110" viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="jerseyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" id="jerseyTop" stop-color="#38bdf8"/>
-                  <stop offset="55%" id="jerseyMid" stop-color="#0ea5e9"/>
-                  <stop offset="100%" id="jerseyBot" stop-color="#0369a1"/>
-                </linearGradient>
-                <linearGradient id="jerseyShine" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="shortsGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/>
-                </linearGradient>
+                <linearGradient id="jerseyGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" id="jerseyTop" stop-color="#38bdf8"/><stop offset="55%" id="jerseyMid" stop-color="#0ea5e9"/><stop offset="100%" id="jerseyBot" stop-color="#0369a1"/></linearGradient>
+                <linearGradient id="jerseyShine" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="45%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+                <linearGradient id="shortsGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
               </defs>
               <ellipse cx="40" cy="106" rx="22" ry="3.5" fill="#000" opacity="0.4"/>
               <g stroke-linecap="round" fill="none">
-                <g stroke="#0a0a0a" stroke-width="8">
-                  <line x1="40" y1="78" x2="30" y2="102"/><line x1="40" y1="78" x2="50" y2="102"/>
-                </g>
-                <g stroke="#e0f2fe" stroke-width="4.5">
-                  <line x1="40" y1="78" x2="30" y2="102"/><line x1="40" y1="78" x2="50" y2="102"/>
-                </g>
+                <g stroke="#0a0a0a" stroke-width="8"><line x1="40" y1="78" x2="30" y2="102"/><line x1="40" y1="78" x2="50" y2="102"/></g>
+                <g stroke="#e0f2fe" stroke-width="4.5"><line x1="40" y1="78" x2="30" y2="102"/><line x1="40" y1="78" x2="50" y2="102"/></g>
               </g>
               <path d="M26 100 L34 100 L32 106 L24 106 Z" fill="#111827"/>
               <path d="M46 100 L54 100 L56 106 L48 106 Z" fill="#111827"/>
@@ -382,18 +249,13 @@
               <rect x="46" y="104" width="10" height="2.5" rx="1" fill="#f59e0b"/>
               <path d="M26 68 L54 68 L56 82 Q56 85 53 85 L46 85 L44 76 L36 76 L34 85 L27 85 Q24 85 24 82 Z" fill="url(#shortsGrad)" stroke="#0a0a0a" stroke-width="1.5"/>
               <line x1="40" y1="70" x2="40" y2="79" stroke="#334155" stroke-width="1.5"/>
-              <path d="M25 44 Q25 38 31 36 L49 36 Q55 38 55 44 L56 68 Q56 72 52 72 L28 72 Q24 72 24 68 Z"
-                    fill="url(#jerseyGrad)" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M25 44 Q25 38 31 36 L49 36 Q55 38 55 44 L56 68 Q56 72 52 72 L28 72 Q24 72 24 68 Z" fill="url(#jerseyGrad)" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/>
               <path d="M26 46 L26 66 Q26 69 29 69 L34 69 L34 46 Z" fill="url(#jerseyShine)"/>
               <path d="M33 36 Q40 42 47 36" fill="none" stroke="#f0f9ff" stroke-width="2.5" stroke-linecap="round"/>
               <text id="jerseyNumber" x="40" y="60" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#f0f9ff" text-anchor="middle" opacity="0.95" style="text-shadow: 0 1px 2px #000;">10</text>
               <g stroke-linecap="round" fill="none">
-                <g stroke="#0a0a0a" stroke-width="8">
-                  <line x1="24" y1="50" x2="12" y2="62"/><line x1="56" y1="50" x2="68" y2="62"/>
-                </g>
-                <g stroke="#e0f2fe" stroke-width="4.5">
-                  <line x1="24" y1="50" x2="12" y2="62"/><line x1="56" y1="50" x2="68" y2="62"/>
-                </g>
+                <g stroke="#0a0a0a" stroke-width="8"><line x1="24" y1="50" x2="12" y2="62"/><line x1="56" y1="50" x2="68" y2="62"/></g>
+                <g stroke="#e0f2fe" stroke-width="4.5"><line x1="24" y1="50" x2="12" y2="62"/><line x1="56" y1="50" x2="68" y2="62"/></g>
               </g>
               <circle cx="11" cy="63" r="3.5" fill="#e0f2fe" stroke="#0a0a0a" stroke-width="1.5"/>
               <circle cx="69" cy="63" r="3.5" fill="#e0f2fe" stroke="#0a0a0a" stroke-width="1.5"/>
@@ -415,8 +277,7 @@
         <div class="absolute top-3 left-4 flex items-center gap-2">
           <svg width="42" height="42" viewBox="0 0 42 42" class="transform -rotate-90">
             <circle cx="21" cy="21" r="17" fill="none" stroke="#1e293b" stroke-width="5"/>
-            <circle id="timerRing" cx="21" cy="21" r="17" fill="none" stroke="#22c55e" stroke-width="5"
-                    stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="0" class="timer-ring"/>
+            <circle id="timerRing" cx="21" cy="21" r="17" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round" stroke-dasharray="106.8" stroke-dashoffset="0" class="timer-ring"/>
           </svg>
           <div id="timerText" class="text-lg font-black text-emerald-400 tabular-nums">20</div>
         </div>
@@ -427,45 +288,23 @@
     </div>
   </main>
 
-  <!-- TUTORIAL -->
-  <div id="tutorialModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-        <h3 class="text-xl font-bold text-amber-400">📖 How to Play</h3>
-        <button onclick="closeTutorial()" class="text-slate-400 hover:text-white text-xl">&times;</button>
-      </div>
-      <div class="text-sm text-slate-300 space-y-3">
-        <p>1. Set <strong>My Player Profile</strong> (name, country, jersey colour, jersey number).</p>
-        <p>2. <strong>Practice</strong> — solo drills vs the keeper. Score 10 goals to finish a level.</p>
-        <p>3. <strong>Online 1v1</strong> — create a room, share the 4-letter code with a friend. They join from their own device and you both race to 10 goals on identical questions.</p>
-        <p>4. Correct answer = top-corner goal. Wrong answer = keeper catches the ball.</p>
-        <p>5. You have 20 seconds per question.</p>
-      </div>
-      <button onclick="closeTutorial()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl transition">Got It!</button>
-    </div>
-  </div>
-
-  <!-- ONLINE MODAL -->
   <div id="onlineModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-800 border border-purple-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b border-slate-700 pb-3">
         <h3 class="text-lg font-bold text-purple-300 flex items-center gap-2"><i class="fas fa-globe"></i> Online 1v1</h3>
         <button onclick="closeOnlineModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
-
       <div id="onlineSetup">
         <p class="text-xs text-slate-400 mb-3">Create a new room, or enter your friend's room code.</p>
         <button id="createRoomBtn" onclick="createOnlineRoom()" class="w-full bg-purple-500 hover:bg-purple-400 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition mb-3">
           <i class="fas fa-plus mr-1"></i> Create Room (Host)
         </button>
         <div class="flex gap-2">
-          <input id="onlineCodeInput" type="text" maxlength="4" placeholder="CODE"
-                 class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white uppercase placeholder-slate-500 focus:outline-none focus:border-purple-400 text-center tracking-widest font-bold">
+          <input id="onlineCodeInput" type="text" maxlength="4" placeholder="CODE" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white uppercase placeholder-slate-500 focus:outline-none focus:border-purple-400 text-center tracking-widest font-bold">
           <button onclick="joinOnlineRoom()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-lg transition">Join</button>
         </div>
         <div id="onlineStatus" class="text-[11px] text-slate-400 mt-2 min-h-[16px]"></div>
       </div>
-
       <div id="onlineRoom" class="hidden text-center">
         <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Room Code</div>
         <div id="onlineRoomCode" class="text-4xl font-black tracking-[0.4em] text-amber-300 mb-2">----</div>
@@ -474,17 +313,21 @@
           <div class="flex justify-between"><span class="text-slate-400">You</span><span id="onlineYouName" class="font-bold text-emerald-300">—</span></div>
           <div class="flex justify-between"><span class="text-slate-400">Friend</span><span id="onlineFriendName" class="font-bold text-rose-300">Waiting…</span></div>
         </div>
+        <div id="numberClashWarn" class="hidden text-xs text-rose-300 font-bold bg-rose-950/60 border border-rose-500/50 rounded-lg p-2 mb-2 text-left"></div>
+        <div id="guestNumberControls" class="hidden mb-3 text-left">
+          <label class="text-xs text-slate-300 block mb-1">Pick a different jersey number:</label>
+          <div class="flex gap-2">
+            <input id="newNumberInput" type="number" min="1" max="99" placeholder="New #" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white text-center font-bold focus:outline-none focus:border-emerald-400">
+            <button onclick="changeGuestNumber()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-lg transition">Claim</button>
+          </div>
+        </div>
         <div id="onlineStateText" class="text-xs text-slate-400 mb-3">Waiting for a friend to join…</div>
-        <button id="onlineStartBtn" onclick="hostStartOnlineMatch()" disabled
-                class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-bold py-2.5 rounded-xl transition">
-          Start Match (Host Only)
-        </button>
+        <button id="onlineStartBtn" onclick="hostStartOnlineMatch()" disabled class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-bold py-2.5 rounded-xl transition">Start Match (Host Only)</button>
         <div id="onlineWaitHost" class="hidden text-xs text-amber-300 animate-pulse mt-2">Waiting for host to start…</div>
       </div>
     </div>
   </div>
 
-  <!-- GAME OVER MODAL -->
   <div id="gameOverModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-800 border border-amber-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center">
       <h3 id="goTitle" class="text-2xl font-black text-amber-300">Full Time!</h3>
@@ -503,7 +346,10 @@
     let isProcessingShot = false;
     let currentLevel = 1;
     let currentQuestion = null;
-    let userLevelStars = JSON.parse(localStorage.getItem('mwc_stars') || '{}');
+
+    // ⚠️ NEW STORAGE KEY — forces a fresh start, ignores old test data
+    const STARS_KEY = 'mwc_stars_v3';
+    let userLevelStars = JSON.parse(localStorage.getItem(STARS_KEY) || '{}');
 
     let myProfile = JSON.parse(localStorage.getItem('mwc_profile') || 'null') || {
       name: "Player", country: "My Country", color: "#22c55e", number: 10
@@ -515,19 +361,9 @@
     const TIMER_CIRCUMFERENCE = 2 * Math.PI * 17;
 
     const O = {
-      active: false,
-      roomCode: null,
-      role: null, // "host" | "guest"
-      myGoals: 0,
-      oppGoals: 0,
-      oppName: "Friend",
-      oppNumber: null,
-      oppColor: null,
-      seed: null,
-      questionIndex: 0,
-      finished: false,
-      peer: null,
-      conn: null
+      active: false, roomCode: null, role: null, myGoals: 0, oppGoals: 0,
+      oppName: "Friend", oppNumber: null, seed: null, questionIndex: 0,
+      finished: false, peer: null, conn: null
     };
 
     const TOURNAMENT_LEVELS = [
@@ -540,6 +376,37 @@
       { id: 7, name: "Level 7: Division Mix", desc: "Division & Subtraction", type: "div_mix" }
     ];
 
+    // ============================================================
+    //  LEVEL UNLOCKING — STRICT SEQUENTIAL RULE
+    // ============================================================
+    // Level 1: ALWAYS unlocked.
+    // Level N (N ≥ 2): unlocked ONLY when Level N-1 has been completed.
+    function isLevelUnlocked(lvlId) {
+      if (lvlId === 1) return true;
+      return (userLevelStars[lvlId - 1] || 0) >= 1;
+    }
+
+    function saveStars() {
+      localStorage.setItem(STARS_KEY, JSON.stringify(userLevelStars));
+    }
+
+    function countCompleted() {
+      return TOURNAMENT_LEVELS.filter(l => (userLevelStars[l.id] || 0) >= 1).length;
+    }
+
+    function resetProgress() {
+      if (!confirm("Reset ALL level progress?\n\nYou'll go back to only Level 1 unlocked.")) return;
+      userLevelStars = {};
+      localStorage.removeItem(STARS_KEY);
+      localStorage.removeItem('mwc_stars');
+      localStorage.removeItem('mwc_stars_v2');
+      renderLevelHub();
+      alert("✅ Progress reset!\n\nOnly Level 1 is unlocked now.");
+    }
+
+    // ============================================================
+    //  COLOUR HELPERS
+    // ============================================================
     function lighten(hex, amt) {
       const n = parseInt(hex.slice(1), 16);
       let r = (n >> 16) + amt, g = ((n >> 8) & 0xff) + amt, b = (n & 0xff) + amt;
@@ -553,6 +420,9 @@
       return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
 
+    // ============================================================
+    //  PROFILE
+    // ============================================================
     function loadProfileInputs() {
       document.getElementById('myName').value = myProfile.name;
       document.getElementById('myCountryName').value = myProfile.country;
@@ -584,40 +454,90 @@
       setTimeout(() => { btn.textContent = old; }, 1000);
     }
 
+    // ============================================================
+    //  RENDER LEVEL HUB WITH STRICT SEQUENTIAL LOCKS
+    // ============================================================
     function renderLevelHub() {
       const grid = document.getElementById('levelGrid');
       grid.innerHTML = '';
+
+      // Progress bar + text
+      const completed = countCompleted();
+      const pct = Math.round((completed / TOURNAMENT_LEVELS.length) * 100);
+      document.getElementById('progressText').textContent = `${completed} / ${TOURNAMENT_LEVELS.length} completed`;
+      document.getElementById('progressBar').style.width = pct + '%';
+
       TOURNAMENT_LEVELS.forEach(lvl => {
         const stars = userLevelStars[lvl.id] || 0;
+        const unlocked = isLevelUnlocked(lvl.id);
         const card = document.createElement('div');
-        card.className = "bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/50 rounded-xl p-4 transition transform hover:-translate-y-1 cursor-pointer flex flex-col justify-between";
-        card.onclick = () => startPractice(lvl.id);
-        card.innerHTML = `
-          <div>
-            <div class="flex justify-between items-start mb-2">
-              <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">${lvl.name}</span>
-              <span class="text-amber-400 text-xs">⭐ ${stars}/3</span>
+
+        if (unlocked) {
+          card.className = "bg-slate-800/90 border border-slate-700/80 hover:border-amber-500/50 rounded-xl p-4 transition transform hover:-translate-y-1 cursor-pointer flex flex-col justify-between";
+          card.onclick = () => startPractice(lvl.id);
+          card.innerHTML = `
+            <div>
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">${lvl.name}</span>
+                <span class="text-amber-400 text-xs">⭐ ${stars}/3</span>
+              </div>
+              <h4 class="font-bold text-slate-100 text-sm mb-1">${lvl.desc}</h4>
+              <p class="text-xs ${stars >= 1 ? 'text-emerald-400 font-semibold' : 'text-slate-400'}">
+                ${stars >= 1 ? '✓ Completed' : '🔓 Unlocked — ready to play'}
+              </p>
             </div>
-            <h4 class="font-bold text-slate-100 text-sm mb-1">${lvl.desc}</h4>
-            <p class="text-xs text-slate-400">Practise solo</p>
-          </div>
-          <button class="mt-4 w-full bg-emerald-600/80 hover:bg-emerald-500 text-slate-950 text-xs font-bold py-2 rounded-lg transition">Practise</button>
-        `;
+            <button class="mt-4 w-full bg-emerald-600/80 hover:bg-emerald-500 text-slate-950 text-xs font-bold py-2 rounded-lg transition">
+              ${stars >= 1 ? 'Play Again' : 'Practise'}
+            </button>
+          `;
+        } else {
+          card.className = "bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 flex flex-col justify-between opacity-70 cursor-not-allowed select-none";
+          card.onclick = () => showLockedMessage(lvl.id);
+          card.innerHTML = `
+            <div>
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-700/60 text-slate-400">${lvl.name}</span>
+                <span class="text-slate-500 text-xs">🔒 Locked</span>
+              </div>
+              <h4 class="font-bold text-slate-400 text-sm mb-1">${lvl.desc}</h4>
+              <p class="text-xs text-rose-400 font-semibold">🔒 Complete Level ${lvl.id - 1} first</p>
+            </div>
+            <button class="mt-4 w-full bg-slate-700/40 text-slate-500 text-xs font-bold py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-1" disabled>
+              <i class="fas fa-lock"></i> Locked
+            </button>
+          `;
+        }
         grid.appendChild(card);
       });
     }
 
-    function applyKit(profile) {
-      const c = profile.color;
-      document.getElementById('jerseyTop').setAttribute('stop-color', lighten(c, 40));
-      document.getElementById('jerseyMid').setAttribute('stop-color', c);
-      document.getElementById('jerseyBot').setAttribute('stop-color', darken(c, 40));
-      document.getElementById('jerseyNumber').textContent = profile.number;
-      document.getElementById('kickerWrapper').style.filter =
-        `drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px ${c}88)`;
+    function showLockedMessage(lvlId) {
+      alert(`🔒 Level ${lvlId} is LOCKED.\n\nYou must complete Level ${lvlId - 1} first to unlock it.\n\nProgress is saved in your browser — reset it with the "Reset" button in the level header if needed.`);
     }
 
+    // ============================================================
+    //  START NEXT PRACTICE (jumps to first uncompleted level)
+    // ============================================================
+    function startNextPractice() {
+      for (let i = 1; i <= TOURNAMENT_LEVELS.length; i++) {
+        if ((userLevelStars[i] || 0) < 1) {
+          startPractice(i);
+          return;
+        }
+      }
+      // All levels completed — replay level 1
+      startPractice(1);
+    }
+
+    // ============================================================
+    //  START A SPECIFIC LEVEL (with unlock guard)
+    // ============================================================
     function startPractice(lvlId) {
+      if (!isLevelUnlocked(lvlId)) {
+        showLockedMessage(lvlId);
+        return;
+      }
+
       O.active = false;
       currentLevel = lvlId;
       goalsScored = 0;
@@ -637,17 +557,30 @@
       nextQuestion();
     }
 
+    function applyKit(profile) {
+      const c = profile.color;
+      document.getElementById('jerseyTop').setAttribute('stop-color', lighten(c, 40));
+      document.getElementById('jerseyMid').setAttribute('stop-color', c);
+      document.getElementById('jerseyBot').setAttribute('stop-color', darken(c, 40));
+      document.getElementById('jerseyNumber').textContent = profile.number;
+      document.getElementById('kickerWrapper').style.filter = `drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px ${c}88)`;
+    }
+
     function qaSkipStage() {
       if (O.active) { alert("QA Skip is disabled in online matches."); return; }
       stopTimer();
-      alert(`⚡ QA Skip Triggered! Level ${currentLevel} completed.`);
       userLevelStars[currentLevel] = 3;
-      localStorage.setItem('mwc_stars', JSON.stringify(userLevelStars));
+      saveStars();
+      const hasNext = currentLevel < TOURNAMENT_LEVELS.length;
+      alert(`⚡ QA Skip Triggered! Level ${currentLevel} completed.\n${hasNext ? '🔓 Level ' + (currentLevel + 1) + ' is now unlocked!' : 'All levels complete!'}`);
       document.getElementById('matchArena').classList.add('hidden');
       document.getElementById('levelHub').classList.remove('hidden');
       renderLevelHub();
     }
 
+    // ============================================================
+    //  TIMER
+    // ============================================================
     function startTimer() {
       stopTimer();
       timeLeft = QUESTION_TIME;
@@ -693,7 +626,6 @@
       if (isProcessingShot) return;
       isProcessingShot = true;
       totalShots++;
-
       const ball = document.getElementById('soccerBall');
       const keeperWrapper = document.getElementById('keeperWrapper');
       const kickerWrapper = document.getElementById('kickerWrapper');
@@ -701,7 +633,6 @@
       const keeperDivesRight = Math.random() > 0.5;
 
       kickerWrapper.classList.add('animate-kicker-swing');
-
       setTimeout(() => {
         kickerWrapper.classList.remove('animate-kicker-swing');
         kickerWrapper.classList.add('animate-kicker-follow');
@@ -711,7 +642,6 @@
         banner.innerText = "⏰ TIME'S UP! Keeper catches the ball!";
         banner.className = "z-20 bg-rose-950/90 border border-rose-500 px-6 py-1.5 rounded-full text-xs font-bold text-rose-300 opacity-100 transition-all duration-300 transform translate-y-0 backdrop-blur-sm shadow-lg shadow-rose-500/30";
       }, 350);
-
       setTimeout(() => {
         banner.className = "z-20 bg-slate-900/80 border border-slate-700 px-6 py-1.5 rounded-full text-xs font-semibold text-amber-300 transition-all duration-300 opacity-0 transform -translate-y-2 backdrop-blur-sm";
         afterShot(false);
@@ -735,7 +665,6 @@
       isProcessingShot = false;
       resetActors();
       resetTimerVisuals();
-
       const lvl = TOURNAMENT_LEVELS.find(l => l.id === currentLevel) || TOURNAMENT_LEVELS[0];
 
       if (O.active) {
@@ -745,7 +674,6 @@
       }
 
       document.getElementById('questionText').innerText = currentQuestion.q;
-
       const optsContainer = document.getElementById('optionsContainer');
       optsContainer.innerHTML = '';
       currentQuestion.opts.forEach(opt => {
@@ -755,7 +683,6 @@
         btn.onclick = () => submitAnswer(opt);
         optsContainer.appendChild(btn);
       });
-
       startTimer();
     }
 
@@ -771,54 +698,22 @@
       const rng = mulberry32((seed || 1) * 7919 + index * 104729);
       const r = (n) => Math.floor(rng() * n);
       let q = "", ans = "", opts = [];
-      if (type === "add_normal") {
-        let a = r(20) + 1, b = r(20) + 1;
-        q = `${a} + ${b} = ?`; ans = (a + b).toString();
-        opts = [a + b, a + b + 2, a + b - 1, a + b + 5];
-      } else if (type === "add_directed") {
-        let a = r(15) - 8, b = r(15) - 8;
-        q = `(${a}) + (${b}) = ?`; ans = (a + b).toString();
-        opts = [a + b, a + b + 3, a + b - 2, -(a + b)];
-      } else if (type === "add_fractions") {
-        q = `1/4 + 2/4 = ?`; ans = `3/4`;
-        opts = ["3/4", "2/4", "1/2", "3/8"];
-      } else if (type === "add_decimals") {
-        let a = (r(5) + 1).toFixed(1), b = (r(5) + 1).toFixed(1);
-        q = `${a} + ${b} = ?`;
-        ans = (parseFloat(a) + parseFloat(b)).toFixed(1);
-        opts = [ans, (parseFloat(ans) + 0.5).toFixed(1), (parseFloat(ans) - 0.2).toFixed(1), (parseFloat(ans) + 1.1).toFixed(1)];
-      } else {
-        let a = r(25) + 5, b = r(15) + 1;
-        q = `${a} - ${b} = ?`; ans = (a - b).toString();
-        opts = [a - b, a - b + 2, a - b - 3, a + b];
-      }
+      if (type === "add_normal") { let a = r(20) + 1, b = r(20) + 1; q = `${a} + ${b} = ?`; ans = (a + b).toString(); opts = [a + b, a + b + 2, a + b - 1, a + b + 5]; }
+      else if (type === "add_directed") { let a = r(15) - 8, b = r(15) - 8; q = `(${a}) + (${b}) = ?`; ans = (a + b).toString(); opts = [a + b, a + b + 3, a + b - 2, -(a + b)]; }
+      else if (type === "add_fractions") { q = `1/4 + 2/4 = ?`; ans = `3/4`; opts = ["3/4", "2/4", "1/2", "3/8"]; }
+      else if (type === "add_decimals") { let a = (r(5) + 1).toFixed(1), b = (r(5) + 1).toFixed(1); q = `${a} + ${b} = ?`; ans = (parseFloat(a) + parseFloat(b)).toFixed(1); opts = [ans, (parseFloat(ans) + 0.5).toFixed(1), (parseFloat(ans) - 0.2).toFixed(1), (parseFloat(ans) + 1.1).toFixed(1)]; }
+      else { let a = r(25) + 5, b = r(15) + 1; q = `${a} - ${b} = ?`; ans = (a - b).toString(); opts = [a - b, a - b + 2, a - b - 3, a + b]; }
       opts = [...new Set(opts)].sort(() => rng() - 0.5);
       return { q, ans, opts };
     }
 
     function generateQuestionByType(type) {
       let q = "", ans = "", opts = [];
-      if (type === "add_normal") {
-        let a = Math.floor(Math.random() * 20) + 1, b = Math.floor(Math.random() * 20) + 1;
-        q = `${a} + ${b} = ?`; ans = (a + b).toString();
-        opts = [a + b, a + b + 2, a + b - 1, a + b + 5];
-      } else if (type === "add_directed") {
-        let a = Math.floor(Math.random() * 15) - 8, b = Math.floor(Math.random() * 15) - 8;
-        q = `(${a}) + (${b}) = ?`; ans = (a + b).toString();
-        opts = [a + b, a + b + 3, a + b - 2, -(a + b)];
-      } else if (type === "add_fractions") {
-        q = `1/4 + 2/4 = ?`; ans = `3/4`;
-        opts = ["3/4", "2/4", "1/2", "3/8"];
-      } else if (type === "add_decimals") {
-        let a = (Math.random() * 5 + 1).toFixed(1), b = (Math.random() * 5 + 1).toFixed(1);
-        q = `${a} + ${b} = ?`;
-        ans = (parseFloat(a) + parseFloat(b)).toFixed(1);
-        opts = [ans, (parseFloat(ans) + 0.5).toFixed(1), (parseFloat(ans) - 0.2).toFixed(1), (parseFloat(ans) + 1.1).toFixed(1)];
-      } else {
-        let a = Math.floor(Math.random() * 25) + 5, b = Math.floor(Math.random() * 15) + 1;
-        q = `${a} - ${b} = ?`; ans = (a - b).toString();
-        opts = [a - b, a - b + 2, a - b - 3, a + b];
-      }
+      if (type === "add_normal") { let a = Math.floor(Math.random() * 20) + 1, b = Math.floor(Math.random() * 20) + 1; q = `${a} + ${b} = ?`; ans = (a + b).toString(); opts = [a + b, a + b + 2, a + b - 1, a + b + 5]; }
+      else if (type === "add_directed") { let a = Math.floor(Math.random() * 15) - 8, b = Math.floor(Math.random() * 15) - 8; q = `(${a}) + (${b}) = ?`; ans = (a + b).toString(); opts = [a + b, a + b + 3, a + b - 2, -(a + b)]; }
+      else if (type === "add_fractions") { q = `1/4 + 2/4 = ?`; ans = `3/4`; opts = ["3/4", "2/4", "1/2", "3/8"]; }
+      else if (type === "add_decimals") { let a = (Math.random() * 5 + 1).toFixed(1), b = (Math.random() * 5 + 1).toFixed(1); q = `${a} + ${b} = ?`; ans = (parseFloat(a) + parseFloat(b)).toFixed(1); opts = [ans, (parseFloat(ans) + 0.5).toFixed(1), (parseFloat(ans) - 0.2).toFixed(1), (parseFloat(ans) + 1.1).toFixed(1)]; }
+      else { let a = Math.floor(Math.random() * 25) + 5, b = Math.floor(Math.random() * 15) + 1; q = `${a} - ${b} = ?`; ans = (a - b).toString(); opts = [a - b, a - b + 2, a - b - 3, a + b]; }
       opts = [...new Set(opts)].sort(() => Math.random() - 0.5);
       return { q, ans, opts };
     }
@@ -834,12 +729,10 @@
       const kickerWrapper = document.getElementById('kickerWrapper');
       const net = document.getElementById('goalNet');
       const banner = document.getElementById('commentaryBanner');
-
       const isCorrect = (selectedOpt.toString() === currentQuestion.ans.toString());
       const keeperDivesRight = Math.random() > 0.5;
 
       kickerWrapper.classList.add('animate-kicker-runup');
-
       setTimeout(() => {
         kickerWrapper.classList.remove('animate-kicker-runup');
         kickerWrapper.classList.add('animate-kicker-swing');
@@ -873,18 +766,15 @@
       }, 1800);
     }
 
+    // ============================================================
+    //  AFTER SHOT — unlock next level only when this one is complete
+    // ============================================================
     function afterShot(isCorrect) {
       if (O.active) {
-        if (isCorrect) {
-          O.myGoals++;
-          sendPeer({ type: 'goal', goals: O.myGoals });
-        }
+        if (isCorrect) { O.myGoals++; sendPeer({ type: 'goal', goals: O.myGoals }); }
         updateOnlineScoreboard();
         if (O.myGoals >= 10 || O.oppGoals >= 10) { endMatch(); return; }
-        if (O.role === "host") {
-          O.questionIndex++;
-          sendPeer({ type: 'questionIndex', index: O.questionIndex });
-        }
+        if (O.role === "host") { O.questionIndex++; sendPeer({ type: 'questionIndex', index: O.questionIndex }); }
         nextQuestion();
         return;
       }
@@ -894,9 +784,14 @@
         document.getElementById('goalCounter').innerText = `${goalsScored} / 10`;
       }
       if (goalsScored >= 10) {
-        alert(`🏆 Practice Complete! ${myProfile.name}, you scored 10 goals!`);
+        // === LEVEL COMPLETE → mark done + unlock next ===
         userLevelStars[currentLevel] = 3;
-        localStorage.setItem('mwc_stars', JSON.stringify(userLevelStars));
+        saveStars();
+        const hasNext = currentLevel < TOURNAMENT_LEVELS.length;
+        const msg = hasNext
+          ? `🏆 Level ${currentLevel} Complete!\n\n${myProfile.name}, you scored 10 goals!\n\n🔓 Level ${currentLevel + 1} is now UNLOCKED!`
+          : `🏆 ALL LEVELS COMPLETE!\n\nAmazing work, ${myProfile.name}! You've finished every level.`;
+        alert(msg);
         document.getElementById('matchArena').classList.add('hidden');
         document.getElementById('levelHub').classList.remove('hidden');
         renderLevelHub();
@@ -914,9 +809,7 @@
       const tie = O.myGoals === O.oppGoals;
       document.getElementById('goTitle').textContent = tie ? "Draw!" : (won ? "You Win! 🏆" : "You Lost");
       document.getElementById('goScore').textContent = `${O.myGoals} – ${O.oppGoals}`;
-      document.getElementById('goSub').textContent = tie
-        ? "Both players scored the same."
-        : `${won ? myProfile.name : O.oppName} won the online match.`;
+      document.getElementById('goSub').textContent = tie ? "Both players scored the same." : `${won ? myProfile.name : O.oppName} won the online match.`;
       document.getElementById('gameOverModal').classList.remove('hidden');
     }
 
@@ -925,56 +818,95 @@
       document.getElementById('matchArena').classList.add('hidden');
       document.getElementById('levelHub').classList.remove('hidden');
       cleanupPeer();
-      O.active = false; O.finished = false; O.roomCode = null; O.role = null; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.active = false; O.finished = false; O.roomCode = null; O.role = null;
+      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0; O.oppNumber = null;
       document.getElementById('mpScoreStrip').classList.add('hidden');
       renderLevelHub();
     }
 
     // ============================================================
-    //  PEERJS ONLINE MULTIPLAYER
+    //  ONLINE MULTIPLAYER (PeerJS) — unchanged
     // ============================================================
-    function openOnlineModal() { document.getElementById('onlineModal').classList.remove('hidden'); }
+    function openOnlineModal() {
+      document.getElementById('onlineSetup').classList.remove('hidden');
+      document.getElementById('onlineRoom').classList.add('hidden');
+      document.getElementById('numberClashWarn').classList.add('hidden');
+      document.getElementById('guestNumberControls').classList.add('hidden');
+      document.getElementById('onlineModal').classList.remove('hidden');
+    }
     function closeOnlineModal() { document.getElementById('onlineModal').classList.add('hidden'); }
     function setOnlineStatus(msg, isError = false) {
       const el = document.getElementById('onlineStatus');
       el.textContent = msg || "";
-      el.className = isError
-        ? "text-[11px] text-rose-300 mt-2 min-h-[16px] font-semibold"
-        : "text-[11px] text-slate-400 mt-2 min-h-[16px]";
+      el.className = isError ? "text-[11px] text-rose-300 mt-2 min-h-[16px] font-semibold" : "text-[11px] text-slate-400 mt-2 min-h-[16px]";
       if (isError) alert("⚠️ " + msg);
     }
-
     function randCode() {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       let s = "";
       for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
       return s;
     }
-
     function cleanupPeer() {
       if (O.conn) { try { O.conn.close(); } catch(e){} O.conn = null; }
       if (O.peer) { try { O.peer.destroy(); } catch(e){} O.peer = null; }
     }
-
     function sendPeer(data) {
-      if (O.conn && O.conn.open) {
-        try { O.conn.send(data); } catch(e) { console.warn("send failed", e); }
+      if (O.conn && O.conn.open) { try { O.conn.send(data); } catch(e) { console.warn("send failed", e); } }
+    }
+    function checkNumberClash() {
+      const clash = O.oppNumber !== null && Number(myProfile.number) === Number(O.oppNumber);
+      const warnEl = document.getElementById('numberClashWarn');
+      const guestCtrl = document.getElementById('guestNumberControls');
+      const startBtn = document.getElementById('onlineStartBtn');
+      const stateText = document.getElementById('onlineStateText');
+
+      if (clash) {
+        warnEl.classList.remove('hidden');
+        startBtn.disabled = true;
+        if (O.role === 'guest') {
+          warnEl.textContent = `⚠️ Host already has jersey #${O.oppNumber}. You must pick a different number to continue.`;
+          guestCtrl.classList.remove('hidden');
+          const suggested = Number(myProfile.number) >= 99 ? 1 : Number(myProfile.number) + 1;
+          document.getElementById('newNumberInput').value = suggested;
+          stateText.textContent = "Jersey number clash — pick a new number.";
+        } else {
+          warnEl.textContent = `⚠️ Your friend also has jersey #${O.oppNumber}. Waiting for them to pick a different number…`;
+          guestCtrl.classList.add('hidden');
+          stateText.textContent = "Waiting for friend to change number…";
+        }
+      } else {
+        warnEl.classList.add('hidden');
+        guestCtrl.classList.add('hidden');
+        if (O.role === 'host' && O.conn && O.conn.open) {
+          startBtn.disabled = false;
+          stateText.textContent = "Friend connected! Tap Start Match.";
+        } else if (O.role === 'guest' && O.oppNumber !== null) {
+          stateText.textContent = "Waiting for host to start…";
+        }
       }
     }
-
+    function changeGuestNumber() {
+      const input = document.getElementById('newNumberInput');
+      let n = parseInt(input.value, 10);
+      if (!n || n < 1) { alert("Enter a number between 1 and 99."); return; }
+      if (n > 99) n = 99;
+      if (O.oppNumber !== null && n === Number(O.oppNumber)) { alert(`#${n} is already taken by ${O.oppName}. Pick another.`); return; }
+      myProfile.number = n;
+      document.getElementById('myJerseyNumber').value = n;
+      localStorage.setItem('mwc_profile', JSON.stringify(myProfile));
+      updateMyPreview();
+      sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
+      checkNumberClash();
+    }
     function createOnlineRoom() {
       cleanupPeer();
       const code = randCode();
-      O.roomCode = code;
-      O.role = "host";
-      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
-      O.seed = Math.floor(Math.random() * 999999) + 1;
-      O.finished = false;
-      O.oppName = "Friend";
+      O.roomCode = code; O.role = "host"; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.seed = Math.floor(Math.random() * 999999) + 1; O.finished = false;
+      O.oppName = "Friend"; O.oppNumber = null;
 
-      const peerId = "mwc-" + code;
-      O.peer = new Peer(peerId, { debug: 1 });
-
+      O.peer = new Peer("mwc-" + code, { debug: 1 });
       O.peer.on('open', () => {
         document.getElementById('onlineSetup').classList.add('hidden');
         document.getElementById('onlineRoom').classList.remove('hidden');
@@ -985,147 +917,104 @@
         document.getElementById('onlineStartBtn').disabled = true;
         document.getElementById('onlineStartBtn').classList.remove('hidden');
         document.getElementById('onlineWaitHost').classList.add('hidden');
+        document.getElementById('numberClashWarn').classList.add('hidden');
+        document.getElementById('guestNumberControls').classList.add('hidden');
         setOnlineStatus("");
       });
-
       O.peer.on('error', (err) => {
         console.error("Peer error:", err);
-        if (err.type === 'unavailable-id') {
-          setOnlineStatus("That code is busy. Creating another…", true);
-          setTimeout(createOnlineRoom, 500);
-        } else {
-          setOnlineStatus("Connection error: " + (err.type || err.message), true);
-        }
+        if (err.type === 'unavailable-id') { setOnlineStatus("That code is busy. Creating another…", true); setTimeout(createOnlineRoom, 500); }
+        else { setOnlineStatus("Connection error: " + (err.type || err.message), true); }
       });
-
       O.peer.on('connection', (conn) => {
         O.conn = conn;
         conn.on('open', () => {
-          sendPeer({
-            type: 'profile',
-            name: myProfile.name,
-            color: myProfile.color,
-            number: myProfile.number
-          });
+          sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
           document.getElementById('onlineFriendName').textContent = "Friend connected!";
-          document.getElementById('onlineStateText').textContent = "Friend connected! Tap Start Match.";
-          document.getElementById('onlineStartBtn').disabled = false;
+          document.getElementById('onlineStateText').textContent = "Friend connected! Checking jersey numbers…";
         });
         setupConnectionHandlers();
       });
-
-      O.peer.on('disconnected', () => {
-        setOnlineStatus("Disconnected from signalling server.", true);
-      });
+      O.peer.on('disconnected', () => { setOnlineStatus("Disconnected from signalling server.", true); });
     }
-
     function joinOnlineRoom() {
       cleanupPeer();
       const code = (document.getElementById('onlineCodeInput').value || "").trim().toUpperCase();
       if (code.length !== 4) { setOnlineStatus("Enter a 4-letter code.", true); return; }
-
-      O.roomCode = code;
-      O.role = "guest";
-      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
-      O.finished = false;
-      O.oppName = "Host";
+      O.roomCode = code; O.role = "guest"; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.finished = false; O.oppName = "Host"; O.oppNumber = null;
 
       O.peer = new Peer({ debug: 1 });
-
       O.peer.on('open', () => {
         setOnlineStatus("Connecting to room " + code + "…");
         O.conn = O.peer.connect("mwc-" + code, { reliable: true });
-
         O.conn.on('open', () => {
-          sendPeer({
-            type: 'profile',
-            name: myProfile.name,
-            color: myProfile.color,
-            number: myProfile.number
-          });
+          sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
           document.getElementById('onlineSetup').classList.add('hidden');
           document.getElementById('onlineRoom').classList.remove('hidden');
           document.getElementById('onlineRoomCode').textContent = code;
           document.getElementById('onlineYouName').textContent = myProfile.name;
           document.getElementById('onlineFriendName').textContent = "Connected";
-          document.getElementById('onlineStateText').textContent = "Waiting for host to start…";
+          document.getElementById('onlineStateText').textContent = "Checking jersey numbers…";
           document.getElementById('onlineStartBtn').classList.add('hidden');
           document.getElementById('onlineWaitHost').classList.remove('hidden');
+          document.getElementById('numberClashWarn').classList.add('hidden');
+          document.getElementById('guestNumberControls').classList.add('hidden');
           setOnlineStatus("");
         });
-
         setupConnectionHandlers();
       });
-
       O.peer.on('error', (err) => {
         console.error("Peer error:", err);
-        if (err.type === 'peer-unavailable') {
-          setOnlineStatus("Room not found. Check the code.", true);
-        } else {
-          setOnlineStatus("Connection error: " + (err.type || err.message), true);
-        }
+        if (err.type === 'peer-unavailable') { setOnlineStatus("Room not found. Check the code.", true); }
+        else { setOnlineStatus("Connection error: " + (err.type || err.message), true); }
       });
     }
-
     function setupConnectionHandlers() {
       O.conn.on('data', (data) => {
         if (!data || !data.type) return;
-
         if (data.type === 'profile') {
           O.oppName = data.name || "Friend";
+          O.oppNumber = (typeof data.number === 'number') ? data.number : null;
           document.getElementById('onlineFriendName').textContent = O.oppName;
+          checkNumberClash();
         }
-
-        if (data.type === 'start') {
-          O.active = true;
-          O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
-          closeOnlineModal();
-          enterOnlineArena();
-        }
-
-        if (data.type === 'goal') {
-          O.oppGoals = data.goals || 0;
-          updateOnlineScoreboard();
-          if (O.oppGoals >= 10) endMatch();
-        }
-
-        if (data.type === 'questionIndex') {
-          O.questionIndex = data.index;
-          if (!isProcessingShot) nextQuestion();
-        }
+        if (data.type === 'start') { O.active = true; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0; closeOnlineModal(); enterOnlineArena(); }
+        if (data.type === 'goal') { O.oppGoals = data.goals || 0; updateOnlineScoreboard(); if (O.oppGoals >= 10) endMatch(); }
+        if (data.type === 'questionIndex') { O.questionIndex = data.index; if (!isProcessingShot) nextQuestion(); }
       });
-
       O.conn.on('close', () => {
-        if (O.active) {
-          alert("Friend disconnected.");
-          backToHubFromGame();
+        if (O.active) { alert("Friend disconnected."); backToHubFromGame(); }
+        else {
+          O.oppNumber = null; O.oppName = "Friend";
+          document.getElementById('numberClashWarn').classList.add('hidden');
+          document.getElementById('guestNumberControls').classList.add('hidden');
+          if (O.role === 'host') {
+            document.getElementById('onlineFriendName').textContent = "Waiting…";
+            document.getElementById('onlineStateText').textContent = "Friend left. Waiting for a new friend to join…";
+            document.getElementById('onlineStartBtn').disabled = true;
+          }
         }
       });
     }
-
     function hostStartOnlineMatch() {
       if (!O.conn || !O.conn.open) { setOnlineStatus("Friend is not connected yet.", true); return; }
-      O.active = true;
-      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
-      O.finished = false;
+      if (O.oppNumber !== null && Number(myProfile.number) === Number(O.oppNumber)) { alert("Jersey numbers clash. Please resolve before starting."); return; }
+      O.active = true; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0; O.finished = false;
       sendPeer({ type: 'start' });
       closeOnlineModal();
       enterOnlineArena();
     }
-
     function enterOnlineArena() {
       currentLevel = 1; goalsScored = 0; totalShots = 0;
       document.getElementById('levelHub').classList.add('hidden');
       document.getElementById('matchArena').classList.remove('hidden');
       document.getElementById('matchArena').classList.add('flex');
       document.getElementById('mpScoreStrip').classList.remove('hidden');
-
-      // Show my name + friend's name on the score strip
       document.getElementById('mpYouLabel').textContent = "You";
       document.getElementById('mpYouName').textContent = myProfile.name;
       document.getElementById('mpOppLabel').textContent = "Friend";
       document.getElementById('mpOppName').textContent = O.oppName;
-
       document.getElementById('mpTurnTag').textContent = "Online match — race to 10!";
       document.getElementById('matchTitle').textContent = "Online 1v1 Match";
       document.getElementById('matchSub').textContent = `${myProfile.name} vs ${O.oppName}`;
@@ -1135,24 +1024,19 @@
       updateOnlineScoreboard();
       nextQuestion();
     }
-
     function updateOnlineScoreboard() {
-      // Always keep the labels showing real names
       document.getElementById('mpYouName').textContent = myProfile.name;
       document.getElementById('mpOppName').textContent = O.oppName;
       document.getElementById('mpYouGoals').textContent = O.myGoals;
       document.getElementById('mpOppGoals').textContent = O.oppGoals;
       document.getElementById('goalCounter').innerText = `You ${O.myGoals} / 10`;
     }
-
     function copyOnlineCode() {
       const code = document.getElementById('onlineRoomCode').textContent;
       if (navigator.clipboard) navigator.clipboard.writeText(code);
       setOnlineStatus("Code copied!");
     }
 
-    function openTutorial() { document.getElementById('tutorialModal').classList.remove('hidden'); }
-    function closeTutorial() { document.getElementById('tutorialModal').classList.add('hidden'); }
     function showHint() { alert(`💡 Coach Hint:\nFor "${currentQuestion.q}", the correct answer is ${currentQuestion.ans}!`); }
 
     document.addEventListener('input', (e) => {
