@@ -289,6 +289,7 @@
     </div>
   </main>
 
+  <!-- ONLINE MODAL -->
   <div id="onlineModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-800 border border-purple-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b border-slate-700 pb-3">
@@ -306,6 +307,7 @@
           <button onclick="joinOnlineRoom()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-lg transition">Join</button>
         </div>
         <div id="onlineStatus" class="text-[11px] text-slate-400 mt-2 min-h-[16px]"></div>
+        <div id="iceDiagnostics" class="hidden text-[10px] text-cyan-400 mt-1 font-mono bg-slate-950/60 rounded px-2 py-1 border border-cyan-500/20"></div>
       </div>
 
       <div id="onlineRoom" class="hidden text-center">
@@ -330,10 +332,11 @@
         <button id="onlineRetryBtn" onclick="retryOnline()" class="hidden w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 rounded-xl transition text-xs">
           <i class="fas fa-redo mr-1"></i> Try Again
         </button>
+        <div id="iceDiagnosticsRoom" class="hidden text-[10px] text-cyan-400 mt-2 font-mono bg-slate-950/60 rounded px-2 py-1 border border-cyan-500/20"></div>
       </div>
 
       <div class="text-[10px] text-slate-500 border-t border-slate-700 pt-2 mt-2 leading-relaxed">
-        <strong class="text-slate-400">If joining fails:</strong> try a different Wi-Fi or mobile hotspot. Some school/office networks block peer-to-peer connections.
+        <strong class="text-slate-400">If joining fails:</strong> try a different Wi-Fi or mobile hotspot. Some school/office networks block peer-to-peer connections. The cyan ICE line (when visible) tells you which connection path was used — <em>relay</em> is the most compatible.
       </div>
     </div>
   </div>
@@ -349,23 +352,52 @@
 
   <script>
     // ============================================================
-    //  EARLY PEER LIB CHECK
+    //  PEER LIB CHECK
     // ============================================================
     if (typeof Peer === 'undefined') {
       window.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           if (typeof Peer === 'undefined') {
-            alert("⚠️ Online multiplayer library failed to load.\n\nCheck your internet and refresh the page.\n\nPractice mode works without this library.");
+            alert("⚠️ Online multiplayer library failed to load.\n\nCheck your internet and refresh the page.");
           }
         }, 1000);
       });
     }
 
     // ============================================================
+    //  ICE CONFIG — THE CRITICAL FIX FOR DIFFERENT DEVICES
+    // ============================================================
+    // STUN: finds your public IP + port. Works for most home Wi-Fi.
+    // TURN: relays data when direct connection is impossible.
+    //       Required for: mobile data, CGNAT, corporate/school firewalls,
+    //       symmetric NAT — i.e. most real-world different-device cases.
+    //
+    // These TURN servers are from the Open Relay Project — free, public,
+    // intended for testing. For a bigger deployment, get your own from
+    // https://www.metered.ca/tools/openrelay/ (free tier, needs signup).
+    const ICE_CONFIG = {
+      iceServers: [
+        // ----- STUN (public IP discovery) -----
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        { urls: 'stun:global.stun.twilio.com:3478' },
+
+        // ----- TURN (relay fallback) — Open Relay Project -----
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turns:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+      ],
+      iceCandidatePoolSize: 10,
+      iceTransportPolicy: 'all'
+    };
+
+    // ============================================================
     //  STATE
     // ============================================================
     const MATCH_KICKS = 10;
-
     let goalsScored = 0;
     let totalShots = 0;
     let isProcessingShot = false;
@@ -422,9 +454,6 @@
       alert("✅ Progress reset!\n\nOnly Level 1 is unlocked now.");
     }
 
-    // ============================================================
-    //  COLOUR HELPERS
-    // ============================================================
     function lighten(hex, amt) {
       const n = parseInt(hex.slice(1), 16);
       let r = (n >> 16) + amt, g = ((n >> 8) & 0xff) + amt, b = (n & 0xff) + amt;
@@ -438,9 +467,6 @@
       return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
 
-    // ============================================================
-    //  PROFILE
-    // ============================================================
     function loadProfileInputs() {
       document.getElementById('myName').value = myProfile.name;
       document.getElementById('myCountryName').value = myProfile.country;
@@ -472,13 +498,9 @@
       setTimeout(() => { btn.textContent = old; }, 1000);
     }
 
-    // ============================================================
-    //  RENDER LEVEL HUB
-    // ============================================================
     function renderLevelHub() {
       const grid = document.getElementById('levelGrid');
       grid.innerHTML = '';
-
       const completed = countCompleted();
       const pct = Math.round((completed / TOURNAMENT_LEVELS.length) * 100);
       document.getElementById('progressText').textContent = `${completed} / ${TOURNAMENT_LEVELS.length} completed`;
@@ -574,9 +596,6 @@
       renderLevelHub();
     }
 
-    // ============================================================
-    //  TIMER
-    // ============================================================
     function startTimer() {
       stopTimer();
       timeLeft = QUESTION_TIME;
@@ -664,7 +683,6 @@
       const lvl = TOURNAMENT_LEVELS.find(l => l.id === currentLevel) || TOURNAMENT_LEVELS[0];
 
       if (O.active) {
-        // Online: each player uses their own index
         currentQuestion = generateSeededQuestion(lvl.type, O.seed, O.myIndex);
       } else {
         currentQuestion = generateQuestionByType(lvl.type);
@@ -763,16 +781,11 @@
       }, 1800);
     }
 
-    // ============================================================
-    //  AFTER SHOT
-    // ============================================================
     function afterShot(isCorrect) {
       if (O.active) {
-        // ========== ONLINE: 10-KICK MATCH ==========
         if (isCorrect) O.myGoals++;
         O.myIndex++;
         O.myDone = O.myIndex >= MATCH_KICKS;
-
         updateOnlineScoreboard();
         sendPeer({ type: 'score', goals: O.myGoals, index: O.myIndex, done: O.myDone });
 
@@ -782,7 +795,6 @@
         return;
       }
 
-      // ========== PRACTICE ==========
       if (isCorrect) {
         goalsScored++;
         document.getElementById('goalCounter').innerText = `${goalsScored} / 10`;
@@ -814,8 +826,7 @@
           <p class="text-xs text-slate-500">You: <b class="text-emerald-300">${O.myGoals}</b> goals &nbsp;·&nbsp; ${O.oppName}: <b class="text-rose-300">${O.oppGoals}</b> goals</p>
         </div>
       `;
-      // Update kick progress on score strip
-      document.getElementById('mpYouKicks').innerHTML = `<span class="text-emerald-400">✓ Done</span>`;
+      document.getElementById('mpYouKicks').innerHTML = `<span class="text-emerald-400">✓ 10 / 10</span>`;
     }
 
     function endMatch() {
@@ -865,6 +876,8 @@
       document.getElementById('onlineRetryBtn').classList.add('hidden');
       document.getElementById('onlineStatus').textContent = "";
       document.getElementById('onlineStatus').className = "text-[11px] text-slate-400 mt-2 min-h-[16px]";
+      document.getElementById('iceDiagnostics').classList.add('hidden');
+      document.getElementById('iceDiagnosticsRoom').classList.add('hidden');
       document.getElementById('onlineModal').classList.remove('hidden');
     }
     function closeOnlineModal() { document.getElementById('onlineModal').classList.add('hidden'); }
@@ -898,13 +911,67 @@
     }
     function checkLib() {
       if (typeof Peer === 'undefined') {
-        setOnlineStatus("❌ PeerJS library not loaded.\n\nPlease refresh the page. If this keeps happening, check your internet.", true);
+        setOnlineStatus("❌ PeerJS library not loaded.\n\nPlease refresh the page.", true);
         showRetry();
         return false;
       }
       return true;
     }
 
+    // ============================================================
+    //  ICE DIAGNOSTICS
+    // ============================================================
+    function attachIceDiagnostics(conn) {
+      try {
+        const pc = conn.peerConnection;
+        if (!pc) return;
+
+        let hostCount = 0, srflxCount = 0, relayCount = 0;
+        const diagEl = document.getElementById('iceDiagnostics');
+        const diagRoomEl = document.getElementById('iceDiagnosticsRoom');
+
+        function render() {
+          const state = pc.iceConnectionState || 'new';
+          const line = `ICE: ${state} · host:${hostCount} srflx:${srflxCount} relay:${relayCount}`;
+          console.log('[ICE]', line);
+          if (diagEl) { diagEl.textContent = line; diagEl.classList.remove('hidden'); }
+          if (diagRoomEl) { diagRoomEl.textContent = line; diagRoomEl.classList.remove('hidden'); }
+
+          if (state === 'failed') {
+            setOnlineStatus("❌ ICE negotiation FAILED — network blocking peer-to-peer.\n\nTry a mobile hotspot, or different Wi-Fi.", true);
+            showRetry();
+          } else if (state === 'disconnected') {
+            setOnlineStatus("⚠️ Connection unstable — may drop if network changes.", true);
+          }
+        }
+
+        pc.addEventListener('icecandidate', (e) => {
+          if (!e.candidate) return;
+          const t = e.candidate.type;
+          if (t === 'host') hostCount++;
+          else if (t === 'srflx') srflxCount++;
+          else if (t === 'relay') relayCount++;
+          render();
+        });
+
+        pc.addEventListener('iceconnectionstatechange', () => {
+          console.log('[ICE] state changed →', pc.iceConnectionState);
+          render();
+        });
+
+        pc.addEventListener('icegatheringstatechange', () => {
+          console.log('[ICE] gathering state →', pc.iceGatheringState);
+        });
+
+        render();
+      } catch (e) {
+        console.warn('Could not attach ICE diagnostics:', e);
+      }
+    }
+
+    // ============================================================
+    //  HOST
+    // ============================================================
     function createOnlineRoom() {
       if (!checkLib()) return;
       cleanupPeer();
@@ -919,8 +986,13 @@
       O.oppName = "Friend"; O.oppNumber = null;
       setOnlineStatus("Step 1/2: Registering with signalling server…");
 
-      try { O.peer = new Peer("mwc-" + code, { debug: 2 }); }
-      catch (e) { setOnlineStatus("❌ Could not create peer: " + e.message, true); showRetry(); return; }
+      try {
+        O.peer = new Peer("mwc-" + code, { debug: 2, config: ICE_CONFIG });
+      } catch (e) {
+        setOnlineStatus("❌ Could not create peer: " + e.message, true);
+        showRetry();
+        return;
+      }
 
       O.joinTimeout = setTimeout(() => {
         if (O.peer && !O.peer.open && !O.peer.destroyed) {
@@ -950,13 +1022,14 @@
         clearTimeout(O.joinTimeout); O.joinTimeout = null;
         console.error("[HOST] Peer error:", err);
         if (err.type === 'unavailable-id') { setOnlineStatus("That code is busy. Creating another…"); setTimeout(createOnlineRoom, 500); }
-        else if (err.type === 'network') { setOnlineStatus("❌ Network error — your firewall may block WebRTC.\n\nTry a mobile hotspot.", true); showRetry(); }
+        else if (err.type === 'network') { setOnlineStatus("❌ Network error — firewall blocks WebRTC.\n\nTry mobile hotspot.", true); showRetry(); }
         else { setOnlineStatus("❌ Error: " + (err.type || err.message), true); showRetry(); }
       });
 
       O.peer.on('connection', (conn) => {
         console.log("[HOST] Incoming from:", conn.peer);
         O.conn = conn;
+        attachIceDiagnostics(conn);
         conn.on('open', () => {
           console.log("[HOST] Connection opened");
           sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
@@ -972,6 +1045,9 @@
       });
     }
 
+    // ============================================================
+    //  GUEST
+    // ============================================================
     function joinOnlineRoom() {
       if (!checkLib()) return;
       cleanupPeer();
@@ -987,8 +1063,13 @@
       O.oppName = "Host"; O.oppNumber = null;
       setOnlineStatus("Step 1/3: Registering with signalling server…");
 
-      try { O.peer = new Peer({ debug: 2 }); }
-      catch (e) { setOnlineStatus("❌ Could not create peer: " + e.message, true); showRetry(); return; }
+      try {
+        O.peer = new Peer({ debug: 2, config: ICE_CONFIG });
+      } catch (e) {
+        setOnlineStatus("❌ Could not create peer: " + e.message, true);
+        showRetry();
+        return;
+      }
 
       O.joinTimeout = setTimeout(() => {
         if (O.peer && !O.peer.open && !O.peer.destroyed) {
@@ -999,15 +1080,22 @@
 
       O.peer.on('open', () => {
         setOnlineStatus("Step 2/3: Contacting room " + code + "…");
-        try { O.conn = O.peer.connect("mwc-" + code, { reliable: true }); }
-        catch (e) { setOnlineStatus("❌ Could not contact room: " + e.message, true); showRetry(); return; }
+        try {
+          O.conn = O.peer.connect("mwc-" + code, { reliable: true });
+        } catch (e) {
+          setOnlineStatus("❌ Could not contact room: " + e.message, true);
+          showRetry();
+          return;
+        }
+
+        attachIceDiagnostics(O.conn);
 
         const connTimeout = setTimeout(() => {
           if (O.conn && !O.conn.open) {
-            setOnlineStatus("❌ Room '" + code + "' didn't respond in 12s.\n\n• Friend's tab closed?\n• Wrong code?\n• Network blocking P2P\n\nTry mobile hotspot.", true);
+            setOnlineStatus("❌ Room '" + code + "' didn't respond in 20s.\n\n• Friend's tab closed?\n• Wrong code?\n• Network blocking P2P\n\nTry mobile hotspot.", true);
             showRetry(); cleanupPeer();
           }
-        }, 12000);
+        }, 20000);
 
         O.conn.on('open', () => {
           clearTimeout(connTimeout);
