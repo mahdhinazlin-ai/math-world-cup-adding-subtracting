@@ -6,7 +6,8 @@
   <title>Math World Cup: Practice & Online Penalty Matches</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <!-- PeerJS from jsdelivr (more reliable than unpkg) -->
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     .stadium-bg { background: radial-gradient(circle at 50% 30%, #0a1a2f 0%, #0b1f33 40%, #030b14 100%); }
     .pitch-grass { background: linear-gradient(180deg, #1a7a3c 0%, #0f5a2a 40%, #0a3d1e 100%); box-shadow: inset 0 0 30px rgba(0,0,0,0.7), inset 0 0 10px #00000055; position: relative; border-radius: 20px; }
@@ -123,7 +124,6 @@
         </div>
       </div>
 
-      <!-- PROGRESS HEADER -->
       <div>
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-sm font-bold text-emerald-300 flex items-center gap-2"><i class="fas fa-list"></i> Practice Levels</h3>
@@ -288,12 +288,14 @@
     </div>
   </main>
 
+  <!-- ONLINE MODAL (improved with step-by-step status) -->
   <div id="onlineModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-800 border border-purple-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b border-slate-700 pb-3">
         <h3 class="text-lg font-bold text-purple-300 flex items-center gap-2"><i class="fas fa-globe"></i> Online 1v1</h3>
         <button onclick="closeOnlineModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
       </div>
+
       <div id="onlineSetup">
         <p class="text-xs text-slate-400 mb-3">Create a new room, or enter your friend's room code.</p>
         <button id="createRoomBtn" onclick="createOnlineRoom()" class="w-full bg-purple-500 hover:bg-purple-400 text-white text-sm font-bold px-4 py-2.5 rounded-lg transition mb-3">
@@ -305,6 +307,7 @@
         </div>
         <div id="onlineStatus" class="text-[11px] text-slate-400 mt-2 min-h-[16px]"></div>
       </div>
+
       <div id="onlineRoom" class="hidden text-center">
         <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Room Code</div>
         <div id="onlineRoomCode" class="text-4xl font-black tracking-[0.4em] text-amber-300 mb-2">----</div>
@@ -324,6 +327,17 @@
         <div id="onlineStateText" class="text-xs text-slate-400 mb-3">Waiting for a friend to join…</div>
         <button id="onlineStartBtn" onclick="hostStartOnlineMatch()" disabled class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-bold py-2.5 rounded-xl transition">Start Match (Host Only)</button>
         <div id="onlineWaitHost" class="hidden text-xs text-amber-300 animate-pulse mt-2">Waiting for host to start…</div>
+
+        <!-- RETRY BUTTON (shown on failure) -->
+        <button id="onlineRetryBtn" onclick="retryOnline()" class="hidden w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 rounded-xl transition text-xs">
+          <i class="fas fa-redo mr-1"></i> Try Again
+        </button>
+      </div>
+
+      <!-- TROUBLESHOOTING HINT -->
+      <div class="text-[10px] text-slate-500 border-t border-slate-700 pt-2 mt-2 leading-relaxed">
+        <strong class="text-slate-400">If joining fails:</strong> try a different Wi-Fi or mobile hotspot.
+        Some school/office networks block the peer-to-peer connection.
       </div>
     </div>
   </div>
@@ -339,6 +353,19 @@
 
   <script>
     // ============================================================
+    //  EARLY CHECK — is PeerJS loaded?
+    // ============================================================
+    if (typeof Peer === 'undefined') {
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          if (typeof Peer === 'undefined') {
+            alert("⚠️ Online multiplayer library failed to load.\n\nPlease check your internet connection and refresh the page.\n\nPractice mode works without this library.");
+          }
+        }, 1000);
+      });
+    }
+
+    // ============================================================
     //  STATE
     // ============================================================
     let goalsScored = 0;
@@ -347,7 +374,6 @@
     let currentLevel = 1;
     let currentQuestion = null;
 
-    // ⚠️ NEW STORAGE KEY — forces a fresh start, ignores old test data
     const STARS_KEY = 'mwc_stars_v3';
     let userLevelStars = JSON.parse(localStorage.getItem(STARS_KEY) || '{}');
 
@@ -363,7 +389,7 @@
     const O = {
       active: false, roomCode: null, role: null, myGoals: 0, oppGoals: 0,
       oppName: "Friend", oppNumber: null, seed: null, questionIndex: 0,
-      finished: false, peer: null, conn: null
+      finished: false, peer: null, conn: null, joinTimeout: null
     };
 
     const TOURNAMENT_LEVELS = [
@@ -377,23 +403,14 @@
     ];
 
     // ============================================================
-    //  LEVEL UNLOCKING — STRICT SEQUENTIAL RULE
+    //  LEVEL UNLOCKING
     // ============================================================
-    // Level 1: ALWAYS unlocked.
-    // Level N (N ≥ 2): unlocked ONLY when Level N-1 has been completed.
     function isLevelUnlocked(lvlId) {
       if (lvlId === 1) return true;
       return (userLevelStars[lvlId - 1] || 0) >= 1;
     }
-
-    function saveStars() {
-      localStorage.setItem(STARS_KEY, JSON.stringify(userLevelStars));
-    }
-
-    function countCompleted() {
-      return TOURNAMENT_LEVELS.filter(l => (userLevelStars[l.id] || 0) >= 1).length;
-    }
-
+    function saveStars() { localStorage.setItem(STARS_KEY, JSON.stringify(userLevelStars)); }
+    function countCompleted() { return TOURNAMENT_LEVELS.filter(l => (userLevelStars[l.id] || 0) >= 1).length; }
     function resetProgress() {
       if (!confirm("Reset ALL level progress?\n\nYou'll go back to only Level 1 unlocked.")) return;
       userLevelStars = {};
@@ -455,13 +472,12 @@
     }
 
     // ============================================================
-    //  RENDER LEVEL HUB WITH STRICT SEQUENTIAL LOCKS
+    //  RENDER LEVEL HUB
     // ============================================================
     function renderLevelHub() {
       const grid = document.getElementById('levelGrid');
       grid.innerHTML = '';
 
-      // Progress bar + text
       const completed = countCompleted();
       const pct = Math.round((completed / TOURNAMENT_LEVELS.length) * 100);
       document.getElementById('progressText').textContent = `${completed} / ${TOURNAMENT_LEVELS.length} completed`;
@@ -512,31 +528,18 @@
     }
 
     function showLockedMessage(lvlId) {
-      alert(`🔒 Level ${lvlId} is LOCKED.\n\nYou must complete Level ${lvlId - 1} first to unlock it.\n\nProgress is saved in your browser — reset it with the "Reset" button in the level header if needed.`);
+      alert(`🔒 Level ${lvlId} is LOCKED.\n\nYou must complete Level ${lvlId - 1} first to unlock it.`);
     }
 
-    // ============================================================
-    //  START NEXT PRACTICE (jumps to first uncompleted level)
-    // ============================================================
     function startNextPractice() {
       for (let i = 1; i <= TOURNAMENT_LEVELS.length; i++) {
-        if ((userLevelStars[i] || 0) < 1) {
-          startPractice(i);
-          return;
-        }
+        if ((userLevelStars[i] || 0) < 1) { startPractice(i); return; }
       }
-      // All levels completed — replay level 1
       startPractice(1);
     }
 
-    // ============================================================
-    //  START A SPECIFIC LEVEL (with unlock guard)
-    // ============================================================
     function startPractice(lvlId) {
-      if (!isLevelUnlocked(lvlId)) {
-        showLockedMessage(lvlId);
-        return;
-      }
+      if (!isLevelUnlocked(lvlId)) { showLockedMessage(lvlId); return; }
 
       O.active = false;
       currentLevel = lvlId;
@@ -766,9 +769,6 @@
       }, 1800);
     }
 
-    // ============================================================
-    //  AFTER SHOT — unlock next level only when this one is complete
-    // ============================================================
     function afterShot(isCorrect) {
       if (O.active) {
         if (isCorrect) { O.myGoals++; sendPeer({ type: 'goal', goals: O.myGoals }); }
@@ -784,13 +784,12 @@
         document.getElementById('goalCounter').innerText = `${goalsScored} / 10`;
       }
       if (goalsScored >= 10) {
-        // === LEVEL COMPLETE → mark done + unlock next ===
         userLevelStars[currentLevel] = 3;
         saveStars();
         const hasNext = currentLevel < TOURNAMENT_LEVELS.length;
         const msg = hasNext
           ? `🏆 Level ${currentLevel} Complete!\n\n${myProfile.name}, you scored 10 goals!\n\n🔓 Level ${currentLevel + 1} is now UNLOCKED!`
-          : `🏆 ALL LEVELS COMPLETE!\n\nAmazing work, ${myProfile.name}! You've finished every level.`;
+          : `🏆 ALL LEVELS COMPLETE!\n\nAmazing work, ${myProfile.name}!`;
         alert(msg);
         document.getElementById('matchArena').classList.add('hidden');
         document.getElementById('levelHub').classList.remove('hidden');
@@ -825,35 +824,308 @@
     }
 
     // ============================================================
-    //  ONLINE MULTIPLAYER (PeerJS) — unchanged
+    //  PEERJS ONLINE MULTIPLAYER (WITH DIAGNOSTICS)
     // ============================================================
     function openOnlineModal() {
-      document.getElementById('onlineSetup').classList.remove('hidden');
-      document.getElementById('onlineRoom').classList.add('hidden');
-      document.getElementById('numberClashWarn').classList.add('hidden');
-      document.getElementById('guestNumberControls').classList.add('hidden');
+      // If host already has an active room, show it. Otherwise show setup.
+      if (O.peer && !O.peer.destroyed && O.role === 'host' && O.roomCode) {
+        document.getElementById('onlineSetup').classList.add('hidden');
+        document.getElementById('onlineRoom').classList.remove('hidden');
+        document.getElementById('onlineRoomCode').textContent = O.roomCode;
+        document.getElementById('onlineYouName').textContent = myProfile.name;
+      } else {
+        document.getElementById('onlineSetup').classList.remove('hidden');
+        document.getElementById('onlineRoom').classList.add('hidden');
+      }
+      document.getElementById('onlineRetryBtn').classList.add('hidden');
+      document.getElementById('onlineStatus').textContent = "";
+      document.getElementById('onlineStatus').className = "text-[11px] text-slate-400 mt-2 min-h-[16px]";
       document.getElementById('onlineModal').classList.remove('hidden');
     }
     function closeOnlineModal() { document.getElementById('onlineModal').classList.add('hidden'); }
+
     function setOnlineStatus(msg, isError = false) {
       const el = document.getElementById('onlineStatus');
       el.textContent = msg || "";
-      el.className = isError ? "text-[11px] text-rose-300 mt-2 min-h-[16px] font-semibold" : "text-[11px] text-slate-400 mt-2 min-h-[16px]";
-      if (isError) alert("⚠️ " + msg);
+      el.className = isError
+        ? "text-[11px] text-rose-300 mt-2 min-h-[16px] font-semibold whitespace-pre-line"
+        : "text-[11px] text-slate-400 mt-2 min-h-[16px] whitespace-pre-line";
     }
+
+    function showRetry() { document.getElementById('onlineRetryBtn').classList.remove('hidden'); }
+    function hideRetry() { document.getElementById('onlineRetryBtn').classList.add('hidden'); }
+
+    function retryOnline() {
+      cleanupPeer();
+      if (O.role === 'host') { createOnlineRoom(); }
+      else { joinOnlineRoom(); }
+    }
+
     function randCode() {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       let s = "";
       for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
       return s;
     }
+
     function cleanupPeer() {
+      if (O.joinTimeout) { clearTimeout(O.joinTimeout); O.joinTimeout = null; }
       if (O.conn) { try { O.conn.close(); } catch(e){} O.conn = null; }
       if (O.peer) { try { O.peer.destroy(); } catch(e){} O.peer = null; }
     }
+
     function sendPeer(data) {
       if (O.conn && O.conn.open) { try { O.conn.send(data); } catch(e) { console.warn("send failed", e); } }
     }
+
+    function checkLib() {
+      if (typeof Peer === 'undefined') {
+        setOnlineStatus("❌ PeerJS library not loaded.\n\nPlease refresh the page. If this keeps happening, check your internet.", true);
+        showRetry();
+        return false;
+      }
+      return true;
+    }
+
+    // ============================================================
+    //  HOST — CREATE ROOM
+    // ============================================================
+    function createOnlineRoom() {
+      if (!checkLib()) return;
+      cleanupPeer();
+      hideRetry();
+
+      const code = randCode();
+      O.roomCode = code;
+      O.role = "host";
+      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.seed = Math.floor(Math.random() * 999999) + 1;
+      O.finished = false;
+      O.oppName = "Friend"; O.oppNumber = null;
+
+      setOnlineStatus("Step 1/2: Registering with signalling server…");
+
+      try {
+        O.peer = new Peer("mwc-" + code, { debug: 2 });
+      } catch (e) {
+        setOnlineStatus("❌ Could not create peer: " + e.message, true);
+        showRetry();
+        return;
+      }
+
+      // 15-second timeout for peer registration
+      O.joinTimeout = setTimeout(() => {
+        if (O.peer && !O.peer.open && !O.peer.destroyed) {
+          setOnlineStatus("❌ Could not register with the signalling server within 15s.\n\n• Check your internet\n• Try a different network\n• Try again", true);
+          showRetry();
+          cleanupPeer();
+        }
+      }, 15000);
+
+      O.peer.on('open', () => {
+        clearTimeout(O.joinTimeout); O.joinTimeout = null;
+        console.log("[HOST] Peer registered:", O.peer.id);
+        setOnlineStatus("");
+        document.getElementById('onlineSetup').classList.add('hidden');
+        document.getElementById('onlineRoom').classList.remove('hidden');
+        document.getElementById('onlineRoomCode').textContent = code;
+        document.getElementById('onlineYouName').textContent = myProfile.name;
+        document.getElementById('onlineFriendName').textContent = "Waiting…";
+        document.getElementById('onlineStateText').textContent = "Waiting for a friend to join…";
+        document.getElementById('onlineStartBtn').disabled = true;
+        document.getElementById('onlineStartBtn').classList.remove('hidden');
+        document.getElementById('onlineWaitHost').classList.add('hidden');
+        document.getElementById('numberClashWarn').classList.add('hidden');
+        document.getElementById('guestNumberControls').classList.add('hidden');
+      });
+
+      O.peer.on('error', (err) => {
+        clearTimeout(O.joinTimeout); O.joinTimeout = null;
+        console.error("[HOST] Peer error:", err);
+        if (err.type === 'unavailable-id') {
+          setOnlineStatus("That code is busy. Creating another…");
+          setTimeout(createOnlineRoom, 500);
+        } else if (err.type === 'network') {
+          setOnlineStatus("❌ Network error. Your internet or firewall may be blocking WebRTC.\n\nTry a different network (mobile hotspot).", true);
+          showRetry();
+        } else {
+          setOnlineStatus("❌ Error: " + (err.type || err.message), true);
+          showRetry();
+        }
+      });
+
+      O.peer.on('connection', (conn) => {
+        console.log("[HOST] Incoming connection from:", conn.peer);
+        O.conn = conn;
+        conn.on('open', () => {
+          console.log("[HOST] Connection opened");
+          sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
+          document.getElementById('onlineFriendName').textContent = "Friend connected!";
+          document.getElementById('onlineStateText').textContent = "Friend connected! Checking jersey numbers…";
+        });
+        setupConnectionHandlers();
+      });
+
+      O.peer.on('disconnected', () => {
+        console.warn("[HOST] Disconnected from signalling server");
+        setOnlineStatus("⚠️ Lost connection to signalling server.", true);
+        showRetry();
+      });
+    }
+
+    // ============================================================
+    //  GUEST — JOIN ROOM
+    // ============================================================
+    function joinOnlineRoom() {
+      if (!checkLib()) return;
+      cleanupPeer();
+      hideRetry();
+
+      const code = (document.getElementById('onlineCodeInput').value || "").trim().toUpperCase();
+      if (code.length !== 4) {
+        setOnlineStatus("⚠️ Please enter a 4-letter code.", true);
+        return;
+      }
+
+      O.roomCode = code;
+      O.role = "guest";
+      O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+      O.finished = false;
+      O.oppName = "Host"; O.oppNumber = null;
+
+      setOnlineStatus("Step 1/3: Registering with signalling server…");
+
+      try {
+        O.peer = new Peer({ debug: 2 });
+      } catch (e) {
+        setOnlineStatus("❌ Could not create peer: " + e.message, true);
+        showRetry();
+        return;
+      }
+
+      // Timeout if peer doesn't open
+      O.joinTimeout = setTimeout(() => {
+        if (O.peer && !O.peer.open && !O.peer.destroyed) {
+          setOnlineStatus("❌ Timed out connecting to the signalling server.\n\nCheck your internet and try again.", true);
+          showRetry();
+          cleanupPeer();
+        }
+      }, 12000);
+
+      O.peer.on('open', () => {
+        console.log("[GUEST] Peer registered as:", O.peer.id);
+        setOnlineStatus("Step 2/3: Contacting room " + code + "…");
+
+        try {
+          O.conn = O.peer.connect("mwc-" + code, { reliable: true });
+        } catch (e) {
+          setOnlineStatus("❌ Could not contact room: " + e.message, true);
+          showRetry();
+          return;
+        }
+
+        // Second timeout — connection must open within 12s
+        const connTimeout = setTimeout(() => {
+          if (O.conn && !O.conn.open) {
+            setOnlineStatus("❌ Room '" + code + "' did not respond within 12 seconds.\n\nPossible reasons:\n• Friend's tab is closed\n• Wrong code\n• Network blocking peer-to-peer\n\nTry a different Wi-Fi / mobile hotspot.", true);
+            showRetry();
+            cleanupPeer();
+          }
+        }, 12000);
+
+        O.conn.on('open', () => {
+          clearTimeout(connTimeout);
+          clearTimeout(O.joinTimeout); O.joinTimeout = null;
+          console.log("[GUEST] Connection opened");
+          setOnlineStatus("Step 3/3: Connected! Exchanging profiles…");
+          sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
+          document.getElementById('onlineSetup').classList.add('hidden');
+          document.getElementById('onlineRoom').classList.remove('hidden');
+          document.getElementById('onlineRoomCode').textContent = code;
+          document.getElementById('onlineYouName').textContent = myProfile.name;
+          document.getElementById('onlineFriendName').textContent = "Connected";
+          document.getElementById('onlineStateText').textContent = "Waiting for host to start…";
+          document.getElementById('onlineStartBtn').classList.add('hidden');
+          document.getElementById('onlineWaitHost').classList.remove('hidden');
+          document.getElementById('numberClashWarn').classList.add('hidden');
+          document.getElementById('guestNumberControls').classList.add('hidden');
+          setOnlineStatus("");
+        });
+
+        O.conn.on('error', (err) => {
+          clearTimeout(connTimeout);
+          console.error("[GUEST] Connection error:", err);
+          setOnlineStatus("❌ Connection error: " + err, true);
+          showRetry();
+        });
+
+        setupConnectionHandlers();
+      });
+
+      O.peer.on('error', (err) => {
+        clearTimeout(O.joinTimeout); O.joinTimeout = null;
+        console.error("[GUEST] Peer error:", err);
+        if (err.type === 'peer-unavailable') {
+          setOnlineStatus("❌ Room '" + code + "' was not found.\n\nCheck that:\n• The code is exactly right (4 letters)\n• Your friend's tab is still open\n• Your friend hasn't closed the room", true);
+        } else if (err.type === 'network') {
+          setOnlineStatus("❌ Network error. Your internet/firewall may be blocking WebRTC.\n\nTry a different network (mobile hotspot).", true);
+        } else {
+          setOnlineStatus("❌ Error: " + (err.type || err.message), true);
+        }
+        showRetry();
+      });
+
+      O.peer.on('disconnected', () => {
+        console.warn("[GUEST] Disconnected from signalling server");
+      });
+    }
+
+    // ============================================================
+    //  SHARED CONNECTION HANDLERS
+    // ============================================================
+    function setupConnectionHandlers() {
+      O.conn.on('data', (data) => {
+        if (!data || !data.type) return;
+        console.log("[DATA]", data.type, data);
+
+        if (data.type === 'profile') {
+          O.oppName = data.name || "Friend";
+          O.oppNumber = (typeof data.number === 'number') ? data.number : null;
+          document.getElementById('onlineFriendName').textContent = O.oppName;
+          checkNumberClash();
+        }
+        if (data.type === 'start') {
+          O.active = true; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
+          closeOnlineModal();
+          enterOnlineArena();
+        }
+        if (data.type === 'goal') {
+          O.oppGoals = data.goals || 0;
+          updateOnlineScoreboard();
+          if (O.oppGoals >= 10) endMatch();
+        }
+        if (data.type === 'questionIndex') {
+          O.questionIndex = data.index;
+          if (!isProcessingShot) nextQuestion();
+        }
+      });
+
+      O.conn.on('close', () => {
+        console.warn("[CONN] Closed");
+        if (O.active) { alert("Friend disconnected."); backToHubFromGame(); }
+        else {
+          O.oppNumber = null; O.oppName = "Friend";
+          document.getElementById('numberClashWarn').classList.add('hidden');
+          document.getElementById('guestNumberControls').classList.add('hidden');
+          if (O.role === 'host') {
+            document.getElementById('onlineFriendName').textContent = "Waiting…";
+            document.getElementById('onlineStateText').textContent = "Friend left. Waiting for a new friend to join…";
+            document.getElementById('onlineStartBtn').disabled = true;
+          }
+        }
+      });
+    }
+
     function checkNumberClash() {
       const clash = O.oppNumber !== null && Number(myProfile.number) === Number(O.oppNumber);
       const warnEl = document.getElementById('numberClashWarn');
@@ -865,13 +1137,13 @@
         warnEl.classList.remove('hidden');
         startBtn.disabled = true;
         if (O.role === 'guest') {
-          warnEl.textContent = `⚠️ Host already has jersey #${O.oppNumber}. You must pick a different number to continue.`;
+          warnEl.textContent = `⚠️ Host already has jersey #${O.oppNumber}. Pick a different number to continue.`;
           guestCtrl.classList.remove('hidden');
           const suggested = Number(myProfile.number) >= 99 ? 1 : Number(myProfile.number) + 1;
           document.getElementById('newNumberInput').value = suggested;
           stateText.textContent = "Jersey number clash — pick a new number.";
         } else {
-          warnEl.textContent = `⚠️ Your friend also has jersey #${O.oppNumber}. Waiting for them to pick a different number…`;
+          warnEl.textContent = `⚠️ Your friend also has jersey #${O.oppNumber}. Waiting for them to change it…`;
           guestCtrl.classList.add('hidden');
           stateText.textContent = "Waiting for friend to change number…";
         }
@@ -886,6 +1158,7 @@
         }
       }
     }
+
     function changeGuestNumber() {
       const input = document.getElementById('newNumberInput');
       let n = parseInt(input.value, 10);
@@ -899,112 +1172,16 @@
       sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
       checkNumberClash();
     }
-    function createOnlineRoom() {
-      cleanupPeer();
-      const code = randCode();
-      O.roomCode = code; O.role = "host"; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
-      O.seed = Math.floor(Math.random() * 999999) + 1; O.finished = false;
-      O.oppName = "Friend"; O.oppNumber = null;
 
-      O.peer = new Peer("mwc-" + code, { debug: 1 });
-      O.peer.on('open', () => {
-        document.getElementById('onlineSetup').classList.add('hidden');
-        document.getElementById('onlineRoom').classList.remove('hidden');
-        document.getElementById('onlineRoomCode').textContent = code;
-        document.getElementById('onlineYouName').textContent = myProfile.name;
-        document.getElementById('onlineFriendName').textContent = "Waiting…";
-        document.getElementById('onlineStateText').textContent = "Waiting for a friend to join…";
-        document.getElementById('onlineStartBtn').disabled = true;
-        document.getElementById('onlineStartBtn').classList.remove('hidden');
-        document.getElementById('onlineWaitHost').classList.add('hidden');
-        document.getElementById('numberClashWarn').classList.add('hidden');
-        document.getElementById('guestNumberControls').classList.add('hidden');
-        setOnlineStatus("");
-      });
-      O.peer.on('error', (err) => {
-        console.error("Peer error:", err);
-        if (err.type === 'unavailable-id') { setOnlineStatus("That code is busy. Creating another…", true); setTimeout(createOnlineRoom, 500); }
-        else { setOnlineStatus("Connection error: " + (err.type || err.message), true); }
-      });
-      O.peer.on('connection', (conn) => {
-        O.conn = conn;
-        conn.on('open', () => {
-          sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
-          document.getElementById('onlineFriendName').textContent = "Friend connected!";
-          document.getElementById('onlineStateText').textContent = "Friend connected! Checking jersey numbers…";
-        });
-        setupConnectionHandlers();
-      });
-      O.peer.on('disconnected', () => { setOnlineStatus("Disconnected from signalling server.", true); });
-    }
-    function joinOnlineRoom() {
-      cleanupPeer();
-      const code = (document.getElementById('onlineCodeInput').value || "").trim().toUpperCase();
-      if (code.length !== 4) { setOnlineStatus("Enter a 4-letter code.", true); return; }
-      O.roomCode = code; O.role = "guest"; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0;
-      O.finished = false; O.oppName = "Host"; O.oppNumber = null;
-
-      O.peer = new Peer({ debug: 1 });
-      O.peer.on('open', () => {
-        setOnlineStatus("Connecting to room " + code + "…");
-        O.conn = O.peer.connect("mwc-" + code, { reliable: true });
-        O.conn.on('open', () => {
-          sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
-          document.getElementById('onlineSetup').classList.add('hidden');
-          document.getElementById('onlineRoom').classList.remove('hidden');
-          document.getElementById('onlineRoomCode').textContent = code;
-          document.getElementById('onlineYouName').textContent = myProfile.name;
-          document.getElementById('onlineFriendName').textContent = "Connected";
-          document.getElementById('onlineStateText').textContent = "Checking jersey numbers…";
-          document.getElementById('onlineStartBtn').classList.add('hidden');
-          document.getElementById('onlineWaitHost').classList.remove('hidden');
-          document.getElementById('numberClashWarn').classList.add('hidden');
-          document.getElementById('guestNumberControls').classList.add('hidden');
-          setOnlineStatus("");
-        });
-        setupConnectionHandlers();
-      });
-      O.peer.on('error', (err) => {
-        console.error("Peer error:", err);
-        if (err.type === 'peer-unavailable') { setOnlineStatus("Room not found. Check the code.", true); }
-        else { setOnlineStatus("Connection error: " + (err.type || err.message), true); }
-      });
-    }
-    function setupConnectionHandlers() {
-      O.conn.on('data', (data) => {
-        if (!data || !data.type) return;
-        if (data.type === 'profile') {
-          O.oppName = data.name || "Friend";
-          O.oppNumber = (typeof data.number === 'number') ? data.number : null;
-          document.getElementById('onlineFriendName').textContent = O.oppName;
-          checkNumberClash();
-        }
-        if (data.type === 'start') { O.active = true; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0; closeOnlineModal(); enterOnlineArena(); }
-        if (data.type === 'goal') { O.oppGoals = data.goals || 0; updateOnlineScoreboard(); if (O.oppGoals >= 10) endMatch(); }
-        if (data.type === 'questionIndex') { O.questionIndex = data.index; if (!isProcessingShot) nextQuestion(); }
-      });
-      O.conn.on('close', () => {
-        if (O.active) { alert("Friend disconnected."); backToHubFromGame(); }
-        else {
-          O.oppNumber = null; O.oppName = "Friend";
-          document.getElementById('numberClashWarn').classList.add('hidden');
-          document.getElementById('guestNumberControls').classList.add('hidden');
-          if (O.role === 'host') {
-            document.getElementById('onlineFriendName').textContent = "Waiting…";
-            document.getElementById('onlineStateText').textContent = "Friend left. Waiting for a new friend to join…";
-            document.getElementById('onlineStartBtn').disabled = true;
-          }
-        }
-      });
-    }
     function hostStartOnlineMatch() {
       if (!O.conn || !O.conn.open) { setOnlineStatus("Friend is not connected yet.", true); return; }
-      if (O.oppNumber !== null && Number(myProfile.number) === Number(O.oppNumber)) { alert("Jersey numbers clash. Please resolve before starting."); return; }
+      if (O.oppNumber !== null && Number(myProfile.number) === Number(O.oppNumber)) { alert("Jersey numbers clash. Please resolve first."); return; }
       O.active = true; O.myGoals = 0; O.oppGoals = 0; O.questionIndex = 0; O.finished = false;
       sendPeer({ type: 'start' });
       closeOnlineModal();
       enterOnlineArena();
     }
+
     function enterOnlineArena() {
       currentLevel = 1; goalsScored = 0; totalShots = 0;
       document.getElementById('levelHub').classList.add('hidden');
@@ -1024,6 +1201,7 @@
       updateOnlineScoreboard();
       nextQuestion();
     }
+
     function updateOnlineScoreboard() {
       document.getElementById('mpYouName').textContent = myProfile.name;
       document.getElementById('mpOppName').textContent = O.oppName;
@@ -1031,10 +1209,11 @@
       document.getElementById('mpOppGoals').textContent = O.oppGoals;
       document.getElementById('goalCounter').innerText = `You ${O.myGoals} / 10`;
     }
+
     function copyOnlineCode() {
       const code = document.getElementById('onlineRoomCode').textContent;
       if (navigator.clipboard) navigator.clipboard.writeText(code);
-      setOnlineStatus("Code copied!");
+      setOnlineStatus("✓ Code copied!");
     }
 
     function showHint() { alert(`💡 Coach Hint:\nFor "${currentQuestion.q}", the correct answer is ${currentQuestion.ans}!`); }
@@ -1048,6 +1227,13 @@
     window.onload = function() {
       loadProfileInputs();
       renderLevelHub();
+      if (typeof Peer === 'undefined') {
+        setTimeout(() => {
+          if (typeof Peer === 'undefined') {
+            console.warn("PeerJS not available — online 1v1 will not work.");
+          }
+        }, 1500);
+      }
     };
   </script>
 </body>
