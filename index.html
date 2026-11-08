@@ -6,22 +6,101 @@
   <title>Math World Cup: Practice & Online Penalty Matches</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
   <style>
     .stadium-bg { background: radial-gradient(circle at 50% 30%, #0a1a2f 0%, #0b1f33 40%, #030b14 100%); }
-    .pitch-grass { background: linear-gradient(180deg, #1a7a3c 0%, #0f5a2a 40%, #0a3d1e 100%); box-shadow: inset 0 0 30px rgba(0,0,0,0.7), inset 0 0 10px #00000055; position: relative; border-radius: 20px; }
-    .pitch-grass::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 40px), repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 40px); border-radius: 20px; pointer-events: none; }
-    .goal-net-3d { background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25) 0%, transparent 30%), repeating-linear-gradient(45deg, #ffffff30 0px, #ffffff30 1px, transparent 1px, transparent 8px), repeating-linear-gradient(-45deg, #ffffff20 0px, #ffffff20 1px, transparent 1px, transparent 8px), linear-gradient(180deg, #2a3f55 0%, #0f1a24 100%); background-blend-mode: overlay, normal, normal, normal; box-shadow: inset 0 0 50px #000000aa, 0 10px 20px -5px black; border-radius: 8px 8px 0 0; border-left: 3px solid #cfd8e0; border-right: 3px solid #cfd8e0; border-top: 6px solid #e8edf2; position: relative; }
-    .goal-net-mesh { position: absolute; inset: 0; background-image: linear-gradient(to right, #ffffff40 1px, transparent 1px), linear-gradient(to bottom, #ffffff40 1px, transparent 1px); background-size: 12px 12px; opacity: 0.55; mix-blend-mode: overlay; pointer-events: none; border-radius: 6px 6px 0 0; }
-    .goal-frame-3d { border-top: 6px solid #eef2f6; border-left: 8px solid #cfd8e3; border-right: 8px solid #cfd8e3; border-radius: 12px 12px 0 0; box-shadow: 0 -10px 20px -5px #000000aa, inset 0 10px 15px -5px #ffffff33; position: relative; }
-    .ball-3d { width: 28px; height: 28px; font-size: 26px; line-height: 28px; text-align: center; filter: drop-shadow(0 5px 4px rgba(0,0,0,0.7)) drop-shadow(0 0 10px rgba(255,255,220,0.5)); transition: transform 0.2s ease-out, filter 0.2s; text-shadow: 0 0 8px white, 0 0 16px rgba(255,255,200,0.6); }
+
+    /* =====================================================
+       REALISTIC PITCH — sky above, grass below, horizon at goal line
+       ===================================================== */
+    .pitch-grass {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      background:
+        /* Soft floodlight glow just above the goal */
+        radial-gradient(ellipse 90% 25% at 50% 42%, rgba(200, 240, 160, 0.20) 0%, transparent 70%),
+        /* Sky / stands above the horizon → horizon at 55% → grass below */
+        linear-gradient(180deg,
+          #0f1a2e 0%,
+          #16283a 22%,
+          #1e3a2a 42%,
+          #235c2c 55%,   /* ← horizon line (goal sits here) */
+          #226228 62%,
+          #1d5a24 78%,
+          #14471b 100%);
+      box-shadow:
+        inset 0 0 60px rgba(0,0,0,0.75),
+        inset 0 -30px 40px -10px rgba(0,0,0,0.85),
+        inset 0 30px 40px -10px rgba(0,0,0,0.4);
+    }
+
+    /* Mowing stripes on the grass half only */
+    .pitch-grass::before {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 45%; /* only the grass area, not the sky */
+      background-image:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,0.075) 0px,
+          rgba(255,255,255,0.075) 60px,
+          transparent 60px,
+          transparent 120px
+        );
+      -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 20%, black 100%);
+              mask-image: linear-gradient(180deg, transparent 0%, black 20%, black 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Grass speckle texture */
+    .pitch-grass::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 50%;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.06) 0%, transparent 2px),
+        radial-gradient(circle at 70% 60%, rgba(0,0,0,0.08) 0%, transparent 2px),
+        radial-gradient(circle at 40% 80%, rgba(255,255,255,0.04) 0%, transparent 2px),
+        radial-gradient(circle at 85% 20%, rgba(0,0,0,0.06) 0%, transparent 2px);
+      background-size: 40px 40px, 55px 55px, 35px 35px, 65px 65px;
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .pitch-markings {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .ball-3d {
+      width: 28px; height: 28px; font-size: 26px; line-height: 28px; text-align: center;
+      filter: drop-shadow(0 5px 4px rgba(0,0,0,0.7)) drop-shadow(0 0 10px rgba(255,255,220,0.5));
+      transition: transform 0.2s ease-out, filter 0.2s;
+      text-shadow: 0 0 8px white, 0 0 16px rgba(255,255,200,0.6);
+    }
     .target-corner { filter: drop-shadow(0 0 12px #fbbf24); transition: all 0.2s; }
     .penalty-spot-glow { box-shadow: 0 0 40px 10px rgba(255,255,180,0.4), 0 0 80px 20px rgba(255,255,200,0.1); border-radius: 50%; }
     .timer-ring { transition: stroke-dashoffset 1s linear, stroke 0.3s; }
     @keyframes timerPulse { 0%,100% { transform: scale(1);} 50% { transform: scale(1.12);} }
     .timer-danger { animation: timerPulse 0.6s ease-in-out infinite; }
-    @keyframes netBulgeReal { 0% { transform: scale(1); filter: brightness(1); } 40% { transform: scale(1.08) translateY(-8px); filter: brightness(1.4); } 70% { transform: scale(1.02) translateY(-2px); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
-    .animate-net-bulge { animation: netBulgeReal 0.6s cubic-bezier(0.2, 0.9, 0.4, 1); }
+
+    @keyframes netBulgeReal {
+      0%   { transform: scale(1) translateY(0); }
+      40%  { transform: scale(1.04) translateY(-3px); }
+      70%  { transform: scale(1.015) translateY(-1px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+    .animate-net-bulge { animation: netBulgeReal 0.55s cubic-bezier(0.2, 0.9, 0.4, 1); }
+
     @keyframes kickTopLeftReal { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 30% { transform: scale(0.85) translate(-60px, -80px); opacity: 1; } 70% { transform: scale(0.55) translate(-190px, -200px); opacity: 1; } 100% { transform: scale(0.3) translate(-280px, -260px); opacity: 0.9; } }
     @keyframes kickTopRightReal { 0% { transform: scale(1) translate(0, 0); opacity: 1; } 30% { transform: scale(0.85) translate(60px, -80px); opacity: 1; } 70% { transform: scale(0.55) translate(190px, -200px); opacity: 1; } 100% { transform: scale(0.3) translate(280px, -260px); opacity: 0.9; } }
     .animate-kick-top-left-real { animation: kickTopLeftReal 0.65s cubic-bezier(0.2, 0.8, 0.4, 1) forwards; }
@@ -45,7 +124,6 @@
     .animate-kicker-swing { animation: kickerSwing 0.4s ease-in-out; }
     .animate-kicker-follow { animation: kickerFollowThrough 0.5s ease-out forwards; }
     @media (max-width: 640px) {
-      .goal-container { width: 100% !important; height: 150px !important; }
       .ball-3d { width: 22px; height: 22px; font-size: 20px; line-height: 22px; }
       #keeperWrapper { transform-origin: center bottom; }
       #kickerWrapper { transform-origin: center bottom; }
@@ -179,20 +257,122 @@
         <div id="mpTurnTag" class="text-[11px] text-center text-amber-300 mt-1 font-bold">10 kicks each — most goals wins!</div>
       </div>
 
+      <!-- ============== PITCH ============== -->
       <div class="relative w-full h-96 pitch-grass rounded-3xl border-4 border-slate-600/60 overflow-hidden shadow-2xl flex flex-col justify-between items-center p-4">
+
+        <!-- ===== Pitch markings — goal line aligned with goal bottom ===== -->
+        <svg class="pitch-markings" viewBox="0 0 320 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lineFadeTop" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%"  stop-color="#ffffff" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0.55"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Goal line — exactly at the goal's ground level (y=232 in viewBox) -->
+          <line x1="60" y1="232" x2="260" y2="232" stroke="url(#lineFadeTop)" stroke-width="0.8" opacity="0.75"/>
+
+          <!-- Penalty box — converges to the goal line -->
+          <path d="M 12 400 L 55 235 L 265 235 L 308 400"
+                fill="none" stroke="url(#lineFadeTop)" stroke-width="1.6" stroke-linejoin="round"/>
+
+          <!-- 6-yard box — smaller trapezoid inside -->
+          <path d="M 78 400 L 100 250 L 220 250 L 242 400"
+                fill="none" stroke="url(#lineFadeTop)" stroke-width="1.2" stroke-linejoin="round"/>
+
+          <!-- Penalty spot -->
+          <circle cx="160" cy="330" r="2.2" fill="#ffffff" opacity="0.9"/>
+          <!-- Penalty arc -->
+          <path d="M 118 330 A 42 42 0 0 0 202 330"
+                fill="none" stroke="url(#lineFadeTop)" stroke-width="1.1" opacity="0.85"/>
+        </svg>
+
+        <!-- ===== Commentary banner ===== -->
         <div id="commentaryBanner" class="z-20 bg-slate-900/90 border border-slate-700 px-6 py-1.5 rounded-full text-xs font-bold text-amber-300 transition-all duration-300 opacity-0 transform -translate-y-2 backdrop-blur-sm">
           Aim for the top corner!
         </div>
 
-        <div id="goalFrame" class="goal-frame-3d relative w-80 h-40 bg-slate-800/30 shadow-2xl flex justify-center items-end z-10 overflow-visible">
-          <div id="goalNet" class="goal-net-3d absolute inset-0 rounded-t-lg overflow-hidden">
-            <div class="goal-net-mesh"></div>
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 rounded-t-lg"></div>
-          </div>
+        <!-- ===== 3D GOAL ===== -->
+        <div id="goalFrame" class="relative w-80 h-40 flex justify-center items-end z-10 overflow-visible">
+          <svg id="goalSVG" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 320 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="postFrontGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="30%" stop-color="#f8fafc"/>
+                <stop offset="70%" stop-color="#cbd5e1"/>
+                <stop offset="100%" stop-color="#64748b"/>
+              </linearGradient>
+              <linearGradient id="postBackGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#94a3b8"/>
+                <stop offset="100%" stop-color="#475569"/>
+              </linearGradient>
+              <linearGradient id="barFrontGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="55%" stop-color="#e2e8f0"/>
+                <stop offset="100%" stop-color="#94a3b8"/>
+              </linearGradient>
+              <linearGradient id="barBackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#cbd5e1"/>
+                <stop offset="100%" stop-color="#64748b"/>
+              </linearGradient>
+              <linearGradient id="netDepth" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#000000" stop-opacity="0.5"/>
+                <stop offset="70%" stop-color="#000000" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#000000" stop-opacity="0.2"/>
+              </linearGradient>
+              <pattern id="netMain" width="8" height="8" patternUnits="userSpaceOnUse">
+                <path d="M 8 0 L 0 8 M 0 0 L 8 8" stroke="rgba(255,255,255,0.5)" stroke-width="0.6" fill="none"/>
+              </pattern>
+              <pattern id="netSide" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 10 M 0 0 L 10 10" stroke="rgba(255,255,255,0.35)" stroke-width="0.5" fill="none"/>
+              </pattern>
+              <pattern id="netBack" width="12" height="12" patternUnits="userSpaceOnUse">
+                <path d="M 12 0 L 0 12 M 0 0 L 12 12" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" fill="none"/>
+              </pattern>
+            </defs>
+
+            <ellipse cx="160" cy="155" rx="150" ry="4" fill="rgba(0,0,0,0.5)"/>
+            <ellipse cx="160" cy="144" rx="105" ry="2" fill="rgba(0,0,0,0.3)"/>
+
+            <rect x="62" y="47" width="196" height="95" fill="url(#netBack)" opacity="0.5"/>
+            <rect x="57" y="42" width="206" height="5" fill="url(#barBackGrad)" rx="1"/>
+            <rect x="57" y="42" width="5" height="100" fill="url(#postBackGrad)" rx="1"/>
+            <rect x="258" y="42" width="5" height="100" fill="url(#postBackGrad)" rx="1"/>
+            <line x1="57" y1="142" x2="263" y2="142" stroke="#475569" stroke-width="1.5" opacity="0.7"/>
+
+            <path d="M 14 18 L 306 18 L 263 42 L 57 42 Z" fill="url(#netSide)" opacity="0.5"/>
+            <path d="M 14 18 L 57 42 L 57 142 L 14 152 Z" fill="url(#netSide)" opacity="0.45"/>
+            <line x1="14" y1="18" x2="57" y2="42" stroke="#94a3b8" stroke-width="0.8" opacity="0.6"/>
+            <line x1="14" y1="152" x2="57" y2="142" stroke="#94a3b8" stroke-width="0.8" opacity="0.6"/>
+            <path d="M 306 18 L 263 42 L 263 142 L 306 152 Z" fill="url(#netSide)" opacity="0.45"/>
+            <line x1="306" y1="18" x2="263" y2="42" stroke="#94a3b8" stroke-width="0.8" opacity="0.6"/>
+            <line x1="306" y1="152" x2="263" y2="142" stroke="#94a3b8" stroke-width="0.8" opacity="0.6"/>
+
+            <g id="goalNet" style="transform-box: fill-box; transform-origin: center;">
+              <rect x="14" y="18" width="292" height="134" fill="url(#netMain)" opacity="0.32"/>
+              <rect x="14" y="18" width="292" height="134" fill="url(#netDepth)" opacity="0.25"/>
+            </g>
+
+            <rect x="16" y="20" width="288" height="3" fill="#0f172a" opacity="0.4"/>
+            <rect x="14" y="5" width="292" height="13" fill="url(#barFrontGrad)" rx="3" stroke="#475569" stroke-width="0.6"/>
+            <rect x="16" y="6" width="288" height="3" fill="#ffffff" rx="1.5" opacity="0.95"/>
+            <rect x="16" y="16" width="288" height="2" fill="#64748b" rx="1" opacity="0.7"/>
+
+            <ellipse cx="22" cy="150" rx="10" ry="3" fill="#000" opacity="0.55"/>
+            <rect x="14" y="5" width="16" height="147" fill="url(#postFrontGrad)" rx="3" stroke="#475569" stroke-width="0.6"/>
+            <rect x="16" y="8" width="3" height="141" fill="#ffffff" rx="1" opacity="0.9"/>
+            <rect x="27" y="8" width="2" height="141" fill="#64748b" rx="1" opacity="0.65"/>
+
+            <ellipse cx="298" cy="150" rx="10" ry="3" fill="#000" opacity="0.55"/>
+            <rect x="290" y="5" width="16" height="147" fill="url(#postFrontGrad)" rx="3" stroke="#475569" stroke-width="0.6"/>
+            <rect x="292" y="8" width="3" height="141" fill="#ffffff" rx="1" opacity="0.9"/>
+            <rect x="303" y="8" width="2" height="141" fill="#64748b" rx="1" opacity="0.65"/>
+          </svg>
+
           <div class="absolute top-3 left-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
           <div class="absolute top-3 right-4 w-10 h-10 rounded-full border-2 border-dashed border-yellow-400/80 flex items-center justify-center text-sm text-yellow-300 target-corner animate-pulse shadow-lg shadow-yellow-500/20 z-20">🎯</div>
 
-          <div id="keeperWrapper" class="absolute bottom-0 z-30 transition-all duration-300" style="transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+          <div id="keeperWrapper" class="absolute bottom-2 z-30 transition-all duration-300" style="transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(255,215,0,0.3));">
             <svg id="keeperSVG" width="100" height="125" viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <radialGradient id="stickGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fde68a" stop-opacity="0.6"/><stop offset="100%" stop-color="#fde68a" stop-opacity="0"/></radialGradient>
@@ -231,6 +411,7 @@
           </div>
         </div>
 
+        <!-- ===== KICKER + BALL ===== -->
         <div class="relative flex items-end justify-center h-32 w-full">
           <div id="kickerWrapper" class="absolute z-40 transition-all duration-300" style="left: calc(50% - 92px); bottom: -4px; transform-origin: center bottom; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(56,189,248,0.4));">
             <svg id="kickerSVG" width="80" height="110" viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
@@ -269,8 +450,6 @@
           <div class="absolute w-16 h-16 rounded-full bg-white/5 blur-2xl penalty-spot-glow" style="bottom: 8px;"></div>
           <div id="soccerBall" class="ball-3d relative z-20" style="margin-bottom: 4px;">⚽</div>
         </div>
-
-        <div class="absolute inset-0 pointer-events-none opacity-10 bg-[repeating-linear-gradient(45deg,#fff_0px,#fff_1px,transparent_1px,transparent_6px)]"></div>
       </div>
 
       <div class="w-full bg-slate-800/90 border border-slate-700 rounded-2xl p-5 text-center shadow-xl backdrop-blur relative">
@@ -289,7 +468,6 @@
     </div>
   </main>
 
-  <!-- ONLINE MODAL -->
   <div id="onlineModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-800 border border-purple-500/40 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b border-slate-700 pb-3">
@@ -307,7 +485,6 @@
           <button onclick="joinOnlineRoom()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-lg transition">Join</button>
         </div>
         <div id="onlineStatus" class="text-[11px] text-slate-400 mt-2 min-h-[16px]"></div>
-        <div id="iceDiagnostics" class="hidden text-[10px] text-cyan-400 mt-1 font-mono bg-slate-950/60 rounded px-2 py-1 border border-cyan-500/20"></div>
       </div>
 
       <div id="onlineRoom" class="hidden text-center">
@@ -332,11 +509,10 @@
         <button id="onlineRetryBtn" onclick="retryOnline()" class="hidden w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 rounded-xl transition text-xs">
           <i class="fas fa-redo mr-1"></i> Try Again
         </button>
-        <div id="iceDiagnosticsRoom" class="hidden text-[10px] text-cyan-400 mt-2 font-mono bg-slate-950/60 rounded px-2 py-1 border border-cyan-500/20"></div>
       </div>
 
       <div class="text-[10px] text-slate-500 border-t border-slate-700 pt-2 mt-2 leading-relaxed">
-        <strong class="text-slate-400">If joining fails:</strong> try a different Wi-Fi or mobile hotspot. Some school/office networks block peer-to-peer connections. The cyan ICE line (when visible) tells you which connection path was used — <em>relay</em> is the most compatible.
+        <strong class="text-slate-400">Powered by MQTT</strong> — uses a public message broker over WebSocket (port 443), so it works through mobile data, school Wi-Fi, and office networks.
       </div>
     </div>
   </div>
@@ -351,52 +527,8 @@
   </div>
 
   <script>
-    // ============================================================
-    //  PEER LIB CHECK
-    // ============================================================
-    if (typeof Peer === 'undefined') {
-      window.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-          if (typeof Peer === 'undefined') {
-            alert("⚠️ Online multiplayer library failed to load.\n\nCheck your internet and refresh the page.");
-          }
-        }, 1000);
-      });
-    }
-
-    // ============================================================
-    //  ICE CONFIG — THE CRITICAL FIX FOR DIFFERENT DEVICES
-    // ============================================================
-    // STUN: finds your public IP + port. Works for most home Wi-Fi.
-    // TURN: relays data when direct connection is impossible.
-    //       Required for: mobile data, CGNAT, corporate/school firewalls,
-    //       symmetric NAT — i.e. most real-world different-device cases.
-    //
-    // These TURN servers are from the Open Relay Project — free, public,
-    // intended for testing. For a bigger deployment, get your own from
-    // https://www.metered.ca/tools/openrelay/ (free tier, needs signup).
-    const ICE_CONFIG = {
-      iceServers: [
-        // ----- STUN (public IP discovery) -----
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' },
-        { urls: 'stun:global.stun.twilio.com:3478' },
-
-        // ----- TURN (relay fallback) — Open Relay Project -----
-        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turns:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-      ],
-      iceCandidatePoolSize: 10,
-      iceTransportPolicy: 'all'
-    };
-
-    // ============================================================
-    //  STATE
-    // ============================================================
+    const MQTT_BROKER = 'wss://broker.emqx.io:8084/mqtt';
+    const TOPIC_PREFIX = 'mwcup/v1/room/';
     const MATCH_KICKS = 10;
     let goalsScored = 0;
     let totalShots = 0;
@@ -422,7 +554,8 @@
       myIndex: 0, oppIndex: 0,
       myDone: false, oppDone: false,
       oppName: "Friend", oppNumber: null, seed: null,
-      finished: false, peer: null, conn: null, joinTimeout: null
+      finished: false,
+      mqtt: null, connected: false, connectTimeout: null
     };
 
     const TOURNAMENT_LEVELS = [
@@ -435,9 +568,6 @@
       { id: 7, name: "Level 7: Division Mix", desc: "Division & Subtraction", type: "div_mix" }
     ];
 
-    // ============================================================
-    //  LEVEL UNLOCKING
-    // ============================================================
     function isLevelUnlocked(lvlId) {
       if (lvlId === 1) return true;
       return (userLevelStars[lvlId - 1] || 0) >= 1;
@@ -787,8 +917,7 @@
         O.myIndex++;
         O.myDone = O.myIndex >= MATCH_KICKS;
         updateOnlineScoreboard();
-        sendPeer({ type: 'score', goals: O.myGoals, index: O.myIndex, done: O.myDone });
-
+        mqttSend({ type: 'score', goals: O.myGoals, index: O.myIndex, done: O.myDone });
         if (O.myDone && O.oppDone) { endMatch(); return; }
         if (O.myDone) { showWaitingForOpponent(); return; }
         nextQuestion();
@@ -850,7 +979,7 @@
       document.getElementById('gameOverModal').classList.add('hidden');
       document.getElementById('matchArena').classList.add('hidden');
       document.getElementById('levelHub').classList.remove('hidden');
-      cleanupPeer();
+      mqttDisconnect();
       O.active = false; O.finished = false; O.roomCode = null; O.role = null;
       O.myGoals = 0; O.oppGoals = 0;
       O.myIndex = 0; O.oppIndex = 0;
@@ -860,11 +989,8 @@
       renderLevelHub();
     }
 
-    // ============================================================
-    //  PEERJS ONLINE MULTIPLAYER
-    // ============================================================
     function openOnlineModal() {
-      if (O.peer && !O.peer.destroyed && O.role === 'host' && O.roomCode) {
+      if (O.roomCode && O.role === 'host' && O.connected) {
         document.getElementById('onlineSetup').classList.add('hidden');
         document.getElementById('onlineRoom').classList.remove('hidden');
         document.getElementById('onlineRoomCode').textContent = O.roomCode;
@@ -876,8 +1002,6 @@
       document.getElementById('onlineRetryBtn').classList.add('hidden');
       document.getElementById('onlineStatus').textContent = "";
       document.getElementById('onlineStatus').className = "text-[11px] text-slate-400 mt-2 min-h-[16px]";
-      document.getElementById('iceDiagnostics').classList.add('hidden');
-      document.getElementById('iceDiagnosticsRoom').classList.add('hidden');
       document.getElementById('onlineModal').classList.remove('hidden');
     }
     function closeOnlineModal() { document.getElementById('onlineModal').classList.add('hidden'); }
@@ -891,7 +1015,7 @@
     function showRetry() { document.getElementById('onlineRetryBtn').classList.remove('hidden'); }
     function hideRetry() { document.getElementById('onlineRetryBtn').classList.add('hidden'); }
     function retryOnline() {
-      cleanupPeer();
+      mqttDisconnect();
       if (O.role === 'host') createOnlineRoom();
       else joinOnlineRoom();
     }
@@ -901,80 +1025,62 @@
       for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
       return s;
     }
-    function cleanupPeer() {
-      if (O.joinTimeout) { clearTimeout(O.joinTimeout); O.joinTimeout = null; }
-      if (O.conn) { try { O.conn.close(); } catch(e){} O.conn = null; }
-      if (O.peer) { try { O.peer.destroy(); } catch(e){} O.peer = null; }
-    }
-    function sendPeer(data) {
-      if (O.conn && O.conn.open) { try { O.conn.send(data); } catch(e) { console.warn("send failed", e); } }
-    }
     function checkLib() {
-      if (typeof Peer === 'undefined') {
-        setOnlineStatus("❌ PeerJS library not loaded.\n\nPlease refresh the page.", true);
+      if (typeof mqtt === 'undefined') {
+        setOnlineStatus("❌ MQTT library not loaded.\n\nPlease refresh the page.", true);
         showRetry();
         return false;
       }
       return true;
     }
-
-    // ============================================================
-    //  ICE DIAGNOSTICS
-    // ============================================================
-    function attachIceDiagnostics(conn) {
-      try {
-        const pc = conn.peerConnection;
-        if (!pc) return;
-
-        let hostCount = 0, srflxCount = 0, relayCount = 0;
-        const diagEl = document.getElementById('iceDiagnostics');
-        const diagRoomEl = document.getElementById('iceDiagnosticsRoom');
-
-        function render() {
-          const state = pc.iceConnectionState || 'new';
-          const line = `ICE: ${state} · host:${hostCount} srflx:${srflxCount} relay:${relayCount}`;
-          console.log('[ICE]', line);
-          if (diagEl) { diagEl.textContent = line; diagEl.classList.remove('hidden'); }
-          if (diagRoomEl) { diagRoomEl.textContent = line; diagRoomEl.classList.remove('hidden'); }
-
-          if (state === 'failed') {
-            setOnlineStatus("❌ ICE negotiation FAILED — network blocking peer-to-peer.\n\nTry a mobile hotspot, or different Wi-Fi.", true);
-            showRetry();
-          } else if (state === 'disconnected') {
-            setOnlineStatus("⚠️ Connection unstable — may drop if network changes.", true);
-          }
-        }
-
-        pc.addEventListener('icecandidate', (e) => {
-          if (!e.candidate) return;
-          const t = e.candidate.type;
-          if (t === 'host') hostCount++;
-          else if (t === 'srflx') srflxCount++;
-          else if (t === 'relay') relayCount++;
-          render();
-        });
-
-        pc.addEventListener('iceconnectionstatechange', () => {
-          console.log('[ICE] state changed →', pc.iceConnectionState);
-          render();
-        });
-
-        pc.addEventListener('icegatheringstatechange', () => {
-          console.log('[ICE] gathering state →', pc.iceGatheringState);
-        });
-
-        render();
-      } catch (e) {
-        console.warn('Could not attach ICE diagnostics:', e);
+    function mqttDisconnect() {
+      if (O.connectTimeout) { clearTimeout(O.connectTimeout); O.connectTimeout = null; }
+      if (O.mqtt) { try { O.mqtt.end(true); } catch(e){} O.mqtt = null; }
+      O.connected = false;
+    }
+    function mqttSend(data) {
+      if (O.mqtt && O.connected && O.roomCode) {
+        const msg = JSON.stringify({ from: O.role, ...data });
+        try { O.mqtt.publish(TOPIC_PREFIX + O.roomCode, msg); }
+        catch(e) { console.warn('MQTT send failed', e); }
       }
     }
+    function mqttConnect(roomCode, role) {
+      return new Promise((resolve, reject) => {
+        const clientId = 'mwc_' + role + '_' + Math.random().toString(36).substring(2, 12);
+        let settled = false;
+        const client = mqtt.connect(MQTT_BROKER, {
+          clientId: clientId, clean: true, connectTimeout: 12000, reconnectPeriod: 0
+        });
+        const fail = (err) => {
+          if (settled) return;
+          settled = true;
+          try { client.end(true); } catch(e){}
+          reject(err);
+        };
+        client.on('connect', () => {
+          client.subscribe(TOPIC_PREFIX + roomCode, { qos: 0 }, (err) => {
+            if (err) return fail(err);
+            if (settled) return;
+            settled = true;
+            resolve(client);
+          });
+        });
+        client.on('error', (err) => { console.error('[MQTT] Error', err); fail(err); });
+        client.on('message', (topic, payload) => {
+          try {
+            const data = JSON.parse(payload.toString());
+            if (data.from === role) return;
+            handleMqttMessage(data);
+          } catch(e) { console.warn('Bad message', e); }
+        });
+        client.on('offline', () => { if (O.active) setOnlineStatus("⚠️ Connection lost.", true); });
+      });
+    }
 
-    // ============================================================
-    //  HOST
-    // ============================================================
-    function createOnlineRoom() {
+    async function createOnlineRoom() {
       if (!checkLib()) return;
-      cleanupPeer();
+      mqttDisconnect();
       hideRetry();
       const code = randCode();
       O.roomCode = code; O.role = "host";
@@ -984,26 +1090,11 @@
       O.seed = Math.floor(Math.random() * 999999) + 1;
       O.finished = false;
       O.oppName = "Friend"; O.oppNumber = null;
-      setOnlineStatus("Step 1/2: Registering with signalling server…");
 
+      setOnlineStatus("Step 1/2: Connecting to message broker…");
       try {
-        O.peer = new Peer("mwc-" + code, { debug: 2, config: ICE_CONFIG });
-      } catch (e) {
-        setOnlineStatus("❌ Could not create peer: " + e.message, true);
-        showRetry();
-        return;
-      }
-
-      O.joinTimeout = setTimeout(() => {
-        if (O.peer && !O.peer.open && !O.peer.destroyed) {
-          setOnlineStatus("❌ Could not register within 15s.\n\n• Check internet\n• Try a different network\n• Try again", true);
-          showRetry(); cleanupPeer();
-        }
-      }, 15000);
-
-      O.peer.on('open', () => {
-        clearTimeout(O.joinTimeout); O.joinTimeout = null;
-        console.log("[HOST] Peer registered:", O.peer.id);
+        O.mqtt = await mqttConnect(code, 'host');
+        O.connected = true;
         setOnlineStatus("");
         document.getElementById('onlineSetup').classList.add('hidden');
         document.getElementById('onlineRoom').classList.remove('hidden');
@@ -1016,41 +1107,15 @@
         document.getElementById('onlineWaitHost').classList.add('hidden');
         document.getElementById('numberClashWarn').classList.add('hidden');
         document.getElementById('guestNumberControls').classList.add('hidden');
-      });
-
-      O.peer.on('error', (err) => {
-        clearTimeout(O.joinTimeout); O.joinTimeout = null;
-        console.error("[HOST] Peer error:", err);
-        if (err.type === 'unavailable-id') { setOnlineStatus("That code is busy. Creating another…"); setTimeout(createOnlineRoom, 500); }
-        else if (err.type === 'network') { setOnlineStatus("❌ Network error — firewall blocks WebRTC.\n\nTry mobile hotspot.", true); showRetry(); }
-        else { setOnlineStatus("❌ Error: " + (err.type || err.message), true); showRetry(); }
-      });
-
-      O.peer.on('connection', (conn) => {
-        console.log("[HOST] Incoming from:", conn.peer);
-        O.conn = conn;
-        attachIceDiagnostics(conn);
-        conn.on('open', () => {
-          console.log("[HOST] Connection opened");
-          sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
-          document.getElementById('onlineFriendName').textContent = "Friend connected!";
-          document.getElementById('onlineStateText').textContent = "Friend connected! Checking jersey numbers…";
-        });
-        setupConnectionHandlers();
-      });
-
-      O.peer.on('disconnected', () => {
-        setOnlineStatus("⚠️ Lost connection to signalling server.", true);
+      } catch (e) {
+        setOnlineStatus("❌ Could not connect to broker.\n\n• Check internet\n• Try again", true);
         showRetry();
-      });
+      }
     }
 
-    // ============================================================
-    //  GUEST
-    // ============================================================
-    function joinOnlineRoom() {
+    async function joinOnlineRoom() {
       if (!checkLib()) return;
-      cleanupPeer();
+      mqttDisconnect();
       hideRetry();
       const code = (document.getElementById('onlineCodeInput').value || "").trim().toUpperCase();
       if (code.length !== 4) { setOnlineStatus("⚠️ Please enter a 4-letter code.", true); return; }
@@ -1061,128 +1126,74 @@
       O.myDone = false; O.oppDone = false;
       O.finished = false;
       O.oppName = "Host"; O.oppNumber = null;
-      setOnlineStatus("Step 1/3: Registering with signalling server…");
 
+      setOnlineStatus("Step 1/2: Connecting to message broker…");
       try {
-        O.peer = new Peer({ debug: 2, config: ICE_CONFIG });
+        O.mqtt = await mqttConnect(code, 'guest');
+        O.connected = true;
+        setOnlineStatus("Step 2/2: Looking for room " + code + "…");
+        mqttSend({ type: 'hello', name: myProfile.name, color: myProfile.color, number: myProfile.number });
+        document.getElementById('onlineSetup').classList.add('hidden');
+        document.getElementById('onlineRoom').classList.remove('hidden');
+        document.getElementById('onlineRoomCode').textContent = code;
+        document.getElementById('onlineYouName').textContent = myProfile.name;
+        document.getElementById('onlineFriendName').textContent = "Searching…";
+        document.getElementById('onlineStateText').textContent = "Looking for host…";
+        document.getElementById('onlineStartBtn').classList.add('hidden');
+        document.getElementById('onlineWaitHost').classList.remove('hidden');
+        document.getElementById('numberClashWarn').classList.add('hidden');
+        document.getElementById('guestNumberControls').classList.add('hidden');
+
+        let attempts = 0;
+        const helloInterval = setInterval(() => {
+          attempts++;
+          if (attempts > 8) { clearInterval(helloInterval); return; }
+          if (O.oppName && O.oppName !== 'Host') { clearInterval(helloInterval); return; }
+          mqttSend({ type: 'hello', name: myProfile.name, color: myProfile.color, number: myProfile.number });
+        }, 800);
+
+        setOnlineStatus("");
       } catch (e) {
-        setOnlineStatus("❌ Could not create peer: " + e.message, true);
+        setOnlineStatus("❌ Could not connect to broker.\n\n• Check internet\n• Try again", true);
         showRetry();
-        return;
       }
-
-      O.joinTimeout = setTimeout(() => {
-        if (O.peer && !O.peer.open && !O.peer.destroyed) {
-          setOnlineStatus("❌ Timed out connecting to signalling server.\n\nCheck internet and try again.", true);
-          showRetry(); cleanupPeer();
-        }
-      }, 12000);
-
-      O.peer.on('open', () => {
-        setOnlineStatus("Step 2/3: Contacting room " + code + "…");
-        try {
-          O.conn = O.peer.connect("mwc-" + code, { reliable: true });
-        } catch (e) {
-          setOnlineStatus("❌ Could not contact room: " + e.message, true);
-          showRetry();
-          return;
-        }
-
-        attachIceDiagnostics(O.conn);
-
-        const connTimeout = setTimeout(() => {
-          if (O.conn && !O.conn.open) {
-            setOnlineStatus("❌ Room '" + code + "' didn't respond in 20s.\n\n• Friend's tab closed?\n• Wrong code?\n• Network blocking P2P\n\nTry mobile hotspot.", true);
-            showRetry(); cleanupPeer();
-          }
-        }, 20000);
-
-        O.conn.on('open', () => {
-          clearTimeout(connTimeout);
-          clearTimeout(O.joinTimeout); O.joinTimeout = null;
-          setOnlineStatus("Step 3/3: Connected! Exchanging profiles…");
-          sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
-          document.getElementById('onlineSetup').classList.add('hidden');
-          document.getElementById('onlineRoom').classList.remove('hidden');
-          document.getElementById('onlineRoomCode').textContent = code;
-          document.getElementById('onlineYouName').textContent = myProfile.name;
-          document.getElementById('onlineFriendName').textContent = "Connected";
-          document.getElementById('onlineStateText').textContent = "Waiting for host to start…";
-          document.getElementById('onlineStartBtn').classList.add('hidden');
-          document.getElementById('onlineWaitHost').classList.remove('hidden');
-          document.getElementById('numberClashWarn').classList.add('hidden');
-          document.getElementById('guestNumberControls').classList.add('hidden');
-          setOnlineStatus("");
-        });
-
-        O.conn.on('error', (err) => {
-          clearTimeout(connTimeout);
-          setOnlineStatus("❌ Connection error: " + err, true);
-          showRetry();
-        });
-
-        setupConnectionHandlers();
-      });
-
-      O.peer.on('error', (err) => {
-        clearTimeout(O.joinTimeout); O.joinTimeout = null;
-        console.error("[GUEST] Peer error:", err);
-        if (err.type === 'peer-unavailable') {
-          setOnlineStatus("❌ Room '" + code + "' not found.\n\nCheck:\n• Code is exactly right\n• Friend's tab still open", true);
-        } else if (err.type === 'network') {
-          setOnlineStatus("❌ Network error — firewall blocks WebRTC.\n\nTry mobile hotspot.", true);
-        } else {
-          setOnlineStatus("❌ Error: " + (err.type || err.message), true);
-        }
-        showRetry();
-      });
-
-      O.peer.on('disconnected', () => {
-        console.warn("[GUEST] Disconnected from signalling server");
-      });
     }
 
-    function setupConnectionHandlers() {
-      O.conn.on('data', (data) => {
-        if (!data || !data.type) return;
-        console.log("[DATA]", data.type, data);
-
-        if (data.type === 'profile') {
-          O.oppName = data.name || "Friend";
-          O.oppNumber = (typeof data.number === 'number') ? data.number : null;
-          document.getElementById('onlineFriendName').textContent = O.oppName;
+    function handleMqttMessage(data) {
+      if (data.type === 'hello') {
+        O.oppName = data.name || (O.role === 'host' ? 'Friend' : 'Host');
+        O.oppNumber = (typeof data.number === 'number') ? data.number : null;
+        document.getElementById('onlineFriendName').textContent = O.oppName;
+        if (O.role === 'host') {
+          mqttSend({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
+          document.getElementById('onlineStateText').textContent = "Friend connected! Checking jersey numbers…";
+          checkNumberClash();
+        } else {
+          document.getElementById('onlineStateText').textContent = "Waiting for host to start…";
           checkNumberClash();
         }
-        if (data.type === 'start') {
-          O.active = true;
-          O.myGoals = 0; O.oppGoals = 0;
-          O.myIndex = 0; O.oppIndex = 0;
-          O.myDone = false; O.oppDone = false;
-          closeOnlineModal();
-          enterOnlineArena();
-        }
-        if (data.type === 'score') {
-          O.oppGoals = data.goals || 0;
-          O.oppIndex = data.index || 0;
-          O.oppDone = data.done || false;
-          updateOnlineScoreboard();
-          if (O.myDone && O.oppDone) endMatch();
-        }
-      });
-
-      O.conn.on('close', () => {
-        if (O.active) { alert("Friend disconnected."); backToHubFromGame(); }
-        else {
-          O.oppNumber = null; O.oppName = "Friend";
-          document.getElementById('numberClashWarn').classList.add('hidden');
-          document.getElementById('guestNumberControls').classList.add('hidden');
-          if (O.role === 'host') {
-            document.getElementById('onlineFriendName').textContent = "Waiting…";
-            document.getElementById('onlineStateText').textContent = "Friend left. Waiting for a new friend to join…";
-            document.getElementById('onlineStartBtn').disabled = true;
-          }
-        }
-      });
+      }
+      if (data.type === 'profile') {
+        O.oppName = data.name || "Opponent";
+        O.oppNumber = (typeof data.number === 'number') ? data.number : null;
+        document.getElementById('onlineFriendName').textContent = O.oppName;
+        checkNumberClash();
+      }
+      if (data.type === 'start') {
+        O.active = true;
+        O.myGoals = 0; O.oppGoals = 0;
+        O.myIndex = 0; O.oppIndex = 0;
+        O.myDone = false; O.oppDone = false;
+        closeOnlineModal();
+        enterOnlineArena();
+      }
+      if (data.type === 'score') {
+        O.oppGoals = data.goals || 0;
+        O.oppIndex = data.index || 0;
+        O.oppDone = data.done || false;
+        updateOnlineScoreboard();
+        if (O.myDone && O.oppDone) endMatch();
+      }
     }
 
     function checkNumberClash() {
@@ -1209,7 +1220,7 @@
       } else {
         warnEl.classList.add('hidden');
         guestCtrl.classList.add('hidden');
-        if (O.role === 'host' && O.conn && O.conn.open) {
+        if (O.role === 'host' && O.connected && O.oppNumber !== null) {
           startBtn.disabled = false;
           stateText.textContent = "Friend connected! Tap Start Match.";
         } else if (O.role === 'guest' && O.oppNumber !== null) {
@@ -1228,19 +1239,20 @@
       document.getElementById('myJerseyNumber').value = n;
       localStorage.setItem('mwc_profile', JSON.stringify(myProfile));
       updateMyPreview();
-      sendPeer({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
+      mqttSend({ type: 'profile', name: myProfile.name, color: myProfile.color, number: myProfile.number });
       checkNumberClash();
     }
 
     function hostStartOnlineMatch() {
-      if (!O.conn || !O.conn.open) { setOnlineStatus("Friend is not connected yet.", true); return; }
-      if (O.oppNumber !== null && Number(myProfile.number) === Number(O.oppNumber)) { alert("Jersey numbers clash. Please resolve first."); return; }
+      if (!O.connected) { setOnlineStatus("Not connected yet.", true); return; }
+      if (O.oppNumber === null) { setOnlineStatus("Friend has not joined yet.", true); return; }
+      if (Number(myProfile.number) === Number(O.oppNumber)) { alert("Jersey numbers clash. Please resolve first."); return; }
       O.active = true;
       O.myGoals = 0; O.oppGoals = 0;
       O.myIndex = 0; O.oppIndex = 0;
       O.myDone = false; O.oppDone = false;
       O.finished = false;
-      sendPeer({ type: 'start' });
+      mqttSend({ type: 'start' });
       closeOnlineModal();
       enterOnlineArena();
     }
@@ -1271,17 +1283,14 @@
       document.getElementById('mpOppName').textContent = O.oppName;
       document.getElementById('mpYouGoals').textContent = O.myGoals;
       document.getElementById('mpOppGoals').textContent = O.oppGoals;
-
       const myKicksDone = Math.min(O.myIndex, MATCH_KICKS);
       const oppKicksDone = Math.min(O.oppIndex, MATCH_KICKS);
-
       document.getElementById('mpYouKicks').innerHTML = O.myDone
         ? `<span class="text-emerald-400">✓ 10 / 10</span>`
         : `Kicks: ${myKicksDone} / ${MATCH_KICKS}`;
       document.getElementById('mpOppKicks').innerHTML = O.oppDone
         ? `<span class="text-rose-400">✓ 10 / 10</span>`
         : `Kicks: ${oppKicksDone} / ${MATCH_KICKS}`;
-
       const nextKick = Math.min(O.myIndex + 1, MATCH_KICKS);
       document.getElementById('goalCounter').innerText = O.myDone
         ? `✓ 10 / 10`
@@ -1303,7 +1312,7 @@
       if (e.target.id === 'myName' || e.target.id === 'myJerseyNumber') updateMyPreview();
     });
 
-    window.addEventListener('beforeunload', () => { cleanupPeer(); });
+    window.addEventListener('beforeunload', () => { mqttDisconnect(); });
 
     window.onload = function() {
       loadProfileInputs();
